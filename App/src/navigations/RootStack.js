@@ -66,9 +66,16 @@ function RootStack() {
           name="ForgotPassword"
           component={ForgotPasswordScreen}
           options={{
-            headerShown: false,
+              headerShown: false,
           }}
-        />
+      />
+          <Stack.Screen
+              name="EnterOTPScreen"
+              component={EnterOTPScreen}
+              options={{
+                  headerShown: false,
+              }}
+          />
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
