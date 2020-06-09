@@ -13,6 +13,7 @@ import {
 import {Icon} from 'native-base';
 import AsyncStorage from '@react-native-community/async-storage';
 
+
 export default class LoginScreen extends Component {
   state = {
     username: '',
@@ -20,6 +21,7 @@ export default class LoginScreen extends Component {
     tokenODM: '',
     token: '',
   };
+
   login = async () => {
     let data = {
       username: '1anhthanh1997',
@@ -113,6 +115,7 @@ export default class LoginScreen extends Component {
     });
     return response;
   };
+
 
   render() {
     return (

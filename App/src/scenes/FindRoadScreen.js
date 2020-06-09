@@ -1,52 +1,77 @@
-import React, {Component} from 'react';
-import {View, Text, StyleSheet, Button} from 'react-native';
-import MapView from 'react-native-maps';
+/**
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
+ * @format
+ * @flow
+ */
 
-export default class FindRoad extends Component {
+import React, { Component } from 'react';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import SearchInput, { createFilter } from 'react-native-search-filter';
+
+
+const KEYS_TO_FILTERS = ['user.name', 'subject'];
+
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      searchTerm: '',
+      email:[{
+        user:{
+          name:"Thanh"
+        },
+        subject:"IT"
+      }]
+    }
+  }
+  searchUpdated(term) {
+    this.setState({ searchTerm: term })
+  }
   render() {
+    const filteredEmails = this.state.email.filter(createFilter(this.state.searchTerm, KEYS_TO_FILTERS))
     return (
-      <View style={styles.screenView}>
         <View style={styles.container}>
-          <MapView
-            mapType={'hybrid'}
-            style={styles.map}
-            initialRegion={{
-              latitude: 37.78825,
-              longitude: -122.4324,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
+          <SearchInput
+              onChangeText={(term) => { this.searchUpdated(term) }}
+              style={styles.searchInput}
+              placeholder="Type a message to search"
           />
-          {/*<View  style={{*/}
-          {/*    position: 'absolute',//use absolute position to show button on top of the map*/}
-          {/*    top: '0%', //for center align*/}
-          {/*    alignSelf: 'flex-start' //for align to right*/}
-          {/*}}>*/}
-          {/*    <Button title={"Hello"}/>*/}
-          {/*</View>*/}
+          <ScrollView>
+            {filteredEmails.map(email => {
+              return (
+                  <TouchableOpacity onPress={() => alert(email.user.name)} key={email.id} style={styles.emailItem}>
+                    <View>
+                      <Text>{email.user.name}</Text>
+                      <Text style={styles.emailSubject}>{email.subject}</Text>
+                    </View>
+                  </TouchableOpacity>
+              )
+            })}
+          </ScrollView>
         </View>
-      </View>
     );
   }
 }
+
 const styles = StyleSheet.create({
-  screenView: {
-    flex: 1,
-  },
   container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'flex-start'
   },
-  map: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  emailItem: {
+    borderBottomWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.3)',
+    padding: 10
   },
+  emailSubject: {
+    color: 'rgba(0,0,0,0.5)'
+  },
+  searchInput: {
+    padding: 10,
+    borderColor: '#CCC',
+    borderWidth: 1
+  }
 });

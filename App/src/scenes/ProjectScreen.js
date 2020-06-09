@@ -25,14 +25,17 @@ import Dialog, {
     DialogButton,
     DialogFooter,
 } from 'react-native-popup-dialog';
+import {SearchBar} from 'react-native-elements';
 import {pink50} from 'react-native-paper/src/styles/colors';
 import EditIcon from 'react-native-vector-icons/FontAwesome';
 import DeleteIcon from 'react-native-vector-icons/AntDesign';
+import SearchInput, {createFilter} from 'react-native-search-filter';
 
 const url = 'http://192.168.55.108:8000';
 const selfUrl = 'http://192.168.55.108:3000';
 export default class ProjectScreen extends Component {
     state = {
+        filterData: [],
         data: [],
         data2: ['value1', 'value2', 'value3'],
         tasks: [],
@@ -43,20 +46,22 @@ export default class ProjectScreen extends Component {
         projectDescription: '',
         id: '',
         authODM: '',
-        auth:'',
+        auth: '',
         editVisible: false,
+        searchText: '',
     };
 
     getListProjectApi = async token => {
-        let authODM = token;
-        let getListProjectUrl = url + '/api/projects/';
-        // console.log(authODM)
+        let auth = token;
+        console.log(auth);
+        let getListProjectUrl = selfUrl + '/projects';
+        console.log(getListProjectUrl);
         let response = await fetch(getListProjectUrl, {
             method: 'GET',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
-                Authorization: authODM,
+                Authorization: auth,
             },
         });
         return response;
@@ -66,8 +71,8 @@ export default class ProjectScreen extends Component {
             let responseJson = await res.json();
             console.log(responseJson);
             this.setState({
-                data: responseJson.results,
-                tasks: responseJson.results[0].tasks,
+                filterData: responseJson,
+                data: responseJson,
             });
         });
     };
@@ -89,7 +94,7 @@ export default class ProjectScreen extends Component {
     createProjectAPI = async data => {
         console.log(data);
         let createProjectUrl = selfUrl + '/projects';
-        console.log(createProjectUrl)
+        console.log(createProjectUrl);
         let response = await fetch(createProjectUrl, {
             method: 'POST',
             headers: {
@@ -119,10 +124,10 @@ export default class ProjectScreen extends Component {
                     let projectRes = await this.createProjectAPI(data);
                     await console.log('exam');
                     await console.log(projectRes);
-                    await this.getListProject(this.state.authODM);
+                    await this.getListProject(this.state.auth);
                     await this.props.navigation.navigate('BottomTab', {screen: 'Project'});
-                }catch (e) {
-                    console.log(e)
+                } catch (e) {
+                    console.log(e);
                 }
 
             })
@@ -149,14 +154,14 @@ export default class ProjectScreen extends Component {
                 Authorization: this.state.authODM,
             },
         });
-        return response
+        return response;
     };
     editProjectAPI = async id => {
         let projectData = {
             projectName: this.state.projectName,
             description: this.state.projectDescription,
         };
-        let editProjectUrl = selfUrl + '/projects/' + id ;
+        let editProjectUrl = selfUrl + '/projects/' + id;
         let response = await fetch(editProjectUrl, {
             method: 'PATCH',
             body: JSON.stringify(projectData),
@@ -165,12 +170,12 @@ export default class ProjectScreen extends Component {
                 Authorization: this.state.auth,
             },
         });
-        return response
+        return response;
     };
     editProject = async id => {
         await this.editProjectODMAPI(id)
             .then(async res => {
-                await this.editProjectAPI(id)
+                await this.editProjectAPI(id);
                 Alert.alert(
                     'Thông báo',
                     'Chỉnh sửa thông tin thành công!',
@@ -178,7 +183,7 @@ export default class ProjectScreen extends Component {
                         {
                             text: 'OK',
                             onPress: async () => {
-                                await this.getListProject(this.state.authODM);
+                                await this.getListProject(this.state.auth);
                                 await this.props.navigation.navigate('BottomTab', {
                                     screen: 'Project',
                                 });
@@ -206,7 +211,7 @@ export default class ProjectScreen extends Component {
         return response;
     };
     deleteProjectAPI = async id => {
-        let deleteProjectUrl = selfUrl + '/projects/' + id ;
+        let deleteProjectUrl = selfUrl + '/projects/' + id;
         console.log(deleteProjectUrl);
         let response = await fetch(deleteProjectUrl, {
             method: 'DELETE',
@@ -221,13 +226,21 @@ export default class ProjectScreen extends Component {
     deleteProject = async id => {
         await this.deleteProjectODMAPI(id)
             .then(async res => {
-                await this.getListProject(this.state.authODM);
+                await this.getListProject(this.state.auth);
             })
             .catch(e => {
                 console.log(e);
             });
-        let deleteProject=await this.deleteProjectAPI(id)
-        console.log(deleteProject)
+        let deleteProject = await this.deleteProjectAPI(id);
+        console.log(deleteProject);
+    };
+    search = async () => {
+        const KEYS_TO_FILTERS = ['projectName'];
+        const filteredEmails = await this.state.data.filter(createFilter(this.state.searchText, KEYS_TO_FILTERS));
+        await console.log(filteredEmails);
+        await this.setState({
+            filterData: filteredEmails,
+        });
     };
 
     async componentDidMount() {
@@ -240,7 +253,7 @@ export default class ProjectScreen extends Component {
             await this.setState({
                 auth: 'Bearer ' + value2,
             });
-            await this.getListProject(this.state.authODM);
+            await this.getListProject(this.state.auth);
             // console.log(this.state.tasks);
         } catch (e) {
             console.log(e);
@@ -253,6 +266,27 @@ export default class ProjectScreen extends Component {
                 <ImageBackground
                     style={styles.imageBackground}
                     source={require('../res/images/loginBackground.jpg')}>
+                    <SearchInput
+                        onChangeText={async (term) => {
+                            await this.setState({
+                                searchText: term,
+                            });
+                            await this.search();
+                        }}
+                        style={styles.searchInput}
+                        placeholder="Type a message to search"
+                    />
+                    {/*<SearchBar*/}
+                    {/*    lightTheme*/}
+                    {/*    placeholder="Search..."*/}
+                    {/*    onChangeText={async (value)=>{*/}
+                    {/*        await this.setState({*/}
+                    {/*            searchText:value*/}
+                    {/*        })*/}
+                    {/*        await this.search();*/}
+                    {/*    }}*/}
+                    {/*    value={this.state.searchText}*/}
+                    {/*/>*/}
                     <View style={{flexDirection: 'row', height: 50}}>
                         <View style={{flex: 2}}/>
                         <View
@@ -391,13 +425,13 @@ export default class ProjectScreen extends Component {
                         </DialogContent>
                     </Dialog>
                     <FlatList
-                        data={this.state.data}
+                        data={this.state.filterData}
                         renderItem={({item}) => (
                             <TouchableOpacity
                                 onPress={() => {
-                                    console.log(item.id);
+                                    console.log(item.projectId);
                                     this.props.navigation.navigate('Task', {
-                                        projectId: item.id,
+                                        projectId: item.projectId,
                                     });
                                 }}>
                                 <View
@@ -413,7 +447,7 @@ export default class ProjectScreen extends Component {
                                     <View
                                         style={{flex: 5, justifyContent: 'center', marginLeft: 15}}>
                                         <Text style={{fontWeight: 'bold', fontSize: 17}}>
-                                            {item.name}
+                                            {item.projectName}
                                         </Text>
                                         <Text style={{fontSize: 17}}>{item.description}</Text>
                                     </View>
@@ -430,8 +464,8 @@ export default class ProjectScreen extends Component {
                                                 this.setState({
                                                     // projectNameTmp:item.name,
                                                     // projectDescriptionTmp:item.description,
-                                                    id: item.id,
-                                                    projectName: item.name,
+                                                    id: item.projectId,
+                                                    projectName: item.projectName,
                                                     projectDescription: item.description,
                                                     editVisible: true,
                                                 });
@@ -460,13 +494,13 @@ export default class ProjectScreen extends Component {
                                                         {
                                                             text: 'Xác nhận',
                                                             onPress: async () => {
-                                                                await this.deleteProject(item.id);
+                                                                await this.deleteProject(item.projectId);
                                                             },
                                                         },
                                                         {
                                                             text: 'Hủy',
                                                             onPress: async () => {
-                                                                this.props.navigation.navigate("Project")
+                                                                this.props.navigation.navigate('Project');
                                                             },
                                                         },
                                                     ],
@@ -492,7 +526,7 @@ export default class ProjectScreen extends Component {
                                 </View>
                             </TouchableOpacity>
                         )}
-                        keyExtractor={item => item.id}
+                        keyExtractor={item => item.projectId}
                     />
                 </ImageBackground>
             </View>
@@ -528,5 +562,11 @@ const styles = StyleSheet.create({
         color: 'gray',
         fontSize: 15,
         paddingLeft: 15,
+    },
+    searchInput: {
+        padding: 10,
+        borderColor: '#CCC',
+        backgroundColor: '#CCC',
+        borderWidth: 1,
     },
 });

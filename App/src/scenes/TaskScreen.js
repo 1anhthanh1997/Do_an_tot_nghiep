@@ -30,6 +30,7 @@ import DeleteIcon from 'react-native-vector-icons/AntDesign';
 import ImagePicker from 'react-native-image-crop-picker';
 import RNFetchBlob from 'rn-fetch-blob';
 import DocumentPicker from 'react-native-document-picker';
+import SearchInput, {createFilter} from 'react-native-search-filter';
 
 const url = 'http://192.168.55.108:8000';
 const selfUrl = 'http://192.168.55.108:3000';
@@ -37,6 +38,7 @@ const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 export default class taskScreen extends Component {
     state = {
+        filterData: [],
         data: [],
         data2: ['value1', 'value2', 'value3'],
         tasks: [],
@@ -52,6 +54,7 @@ export default class taskScreen extends Component {
         chooseFolder: false,
         folderUri: '',
         isDisplaySpinner: false,
+        searchText: '',
     };
 
     getListTaskApi = async token => {
@@ -74,8 +77,9 @@ export default class taskScreen extends Component {
             let responseJson = await res.json();
             console.log(responseJson);
             await this.setState({
+                filterData: responseJson,
                 data: responseJson,
-                folderUri:responseJson.link
+                // folderUri: responseJson.link,
             });
             // await console.log(this.state.data.length)
         });
@@ -321,14 +325,15 @@ export default class taskScreen extends Component {
         }
     };
     updateTileUri = async (id) => {
-        console.log(id)
+        console.log(id);
         await this.updateTileUriApi(id)
             .then(async res => {
                 console.log(res);
-                await Toast.show("Cập nhật đường dẫn thành công",Toast.SHORT);
+                await Toast.show('Cập nhật đường dẫn thành công', Toast.SHORT);
                 await this.setState({
-                    chooseFolder:false
-                })
+                    chooseFolder: false,
+                });
+                await this.getListTask(this.state.auth)
             })
             .catch(e => {
                 console.log(e);
@@ -351,6 +356,39 @@ export default class taskScreen extends Component {
             },
         });
         return response;
+    };
+    search = async () => {
+        const KEYS_TO_FILTERS = ['taskName'];
+        const filteredEmails = await this.state.data.filter(createFilter(this.state.searchText, KEYS_TO_FILTERS));
+        await console.log(filteredEmails);
+        await this.setState({
+            filterData: filteredEmails,
+        });
+    };
+
+    getLinkApi = async () => {
+        let getLinkUrl =
+            selfUrl + '/projects/' + this.state.projectId + '/tasks/' + this.state.id ;
+        console.log('link:' + getLinkUrl);
+        let response = await fetch(getLinkUrl, {
+            method: 'GET',
+            headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+                Authorization: this.state.auth,
+            },
+        });
+        return response;
+    };
+
+    getLink = async () => {
+        await this.getLinkApi().then(async (res) => {
+            let response = await res.json();
+            console.log(response);
+            await this.setState({
+                folderUri: response.link
+            });
+
+        });
     };
 
     async componentDidMount() {
@@ -381,6 +419,15 @@ export default class taskScreen extends Component {
                 <ImageBackground
                     style={styles.imageBackground}
                     source={require('../res/images/loginBackground.jpg')}>
+                    <SearchInput
+                        onChangeText={async (term) => {
+                            await this.setState({
+                                searchText: term,
+                            });
+                            await this.search();
+                        }}
+                        style={styles.searchInput}
+                        placeholder="Type a message to search"/>
                     <View style={{flexDirection: 'row', height: 50}}>
                         <View style={{flex: 2}}/>
                         <View
@@ -608,26 +655,24 @@ export default class taskScreen extends Component {
                     />
 
                     <FlatList
-                        data={this.state.data}
+                        data={this.state.filterData}
                         renderItem={({item}) => (
                             <TouchableOpacity
                                 onPress={async () => {
                                     await this.setState({
                                         id: item.taskId,
-
                                     });
-                                    if (this.state.folderUri === '') {
-                                        Toast.show('Vui lòng chọn đường dẫn tới thư mục tile trước khi xem bản đồ')
+                                    await this.getLink()
+                                    if (this.state.folderUri === ''||this.state.folderUri ===undefined) {
+                                        Toast.show('Vui lòng chọn đường dẫn tới thư mục tile trước khi xem bản đồ');
+                                    } else {
+                                        await this.props.navigation.navigate('Map', {
+                                            link: this.state.folderUri,
+                                            taskId: item.taskId,
+                                            projectId: this.state.projectId,
+                                        });
                                     }
-                                    else
-                                        {
-                                            await this.props.navigation.navigate('Map',{
-                                                link:this.state.folderUri,
-                                                taskId:item.taskId,
-                                                projectId: this.state.projectId
-                                            });
-                                        }
-                                    }
+                                }
                                 }>
                                 <View
                                     style={{
@@ -673,12 +718,12 @@ export default class taskScreen extends Component {
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={{height: 37, width: 37, margin: 5}}
-                                            onPress={() => {
-                                                this.setState({
-                                                    folderUri:item.link,
+                                            onPress={async () => {
+                                                await this.setState({
                                                     chooseFolder: true,
-                                                    id:item.taskId
+                                                    id: item.taskId,
                                                 });
+                                                await this.getLink()
                                             }}>
                                             <View
                                                 style={{
@@ -796,5 +841,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 10,
+    },
+    searchInput: {
+        padding: 10,
+        borderColor: '#CCC',
+        backgroundColor: '#CCC',
+        borderWidth: 1,
     },
 });

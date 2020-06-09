@@ -1,28 +1,24 @@
 import React from 'react';
 import {
-    StyleSheet,
-    View,
-    Text,
-    Dimensions,
-    Platform,
-    Image,
-    TextInput,
-    ScrollView,
-    TouchableOpacity,
     Alert,
+    Dimensions,
+    FlatList,
+    Image,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Toast from 'react-native-simple-toast';
-import MapView, {
-    MAP_TYPES,
-    PROVIDER_DEFAULT,
-    UrlTile,
-    Marker,
-    Polyline,
-} from 'react-native-maps';
+import MapView, {MAP_TYPES, Marker, Polyline, PROVIDER_DEFAULT, UrlTile} from 'react-native-maps';
 import SearchableDropdown from 'react-native-searchable-dropdown';
 
 import RBSheet from 'react-native-raw-bottom-sheet';
 import AsyncStorage from '@react-native-community/async-storage';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const {width, height} = Dimensions.get('window');
 
@@ -30,42 +26,8 @@ const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.002; // 0.0922
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 const selfUrl = 'http://192.168.55.108:3000';
-const speed=4000
-const mountOfcalo=546
-// let items = [
-//     {
-//         id: 1,
-//         name: 'JavaScript',
-//     },
-//     {
-//         id: 2,
-//         name: 'Java',
-//     },
-//     {
-//         id: 3,
-//         name: 'Ruby',
-//     },
-//     {
-//         id: 4,
-//         name: 'React Native',
-//     },
-//     {
-//         id: 5,
-//         name: 'PHP',
-//     },
-//     {
-//         id: 6,
-//         name: 'Python',
-//     },
-//     {
-//         id: 7,
-//         name: 'Go',
-//     },
-//     {
-//         id: 8,
-//         name: 'Swift',
-//     },
-// ];
+const speed = 4000;
+const mountOfcalo = 546;
 
 export default class MapScreen extends React.Component {
     constructor(props, context) {
@@ -79,7 +41,12 @@ export default class MapScreen extends React.Component {
                 longitudeDelta: LONGITUDE_DELTA,
             },
             markers: [],
-            currentMarker: '',
+            currentMarker: {
+                dateTime: {
+                    date: '',
+                    time: '',
+                },
+            },
             isCreateMarker: false,
             markerType: 0,
             polylines: [],
@@ -91,13 +58,24 @@ export default class MapScreen extends React.Component {
             projectId: '',
             auth: '',
             isShowFindingView: false,
-            startingId:'',
-            finishingId:'',
+            startingId: '',
+            finishingId: '',
             startingPoint: '',
             finishingPoint: '',
             isDisplaySearchDropdown: false,
             placeholderSearch: '',
             length: 0,
+            isDatePickerVisible: false,
+            isTimePickerVisible: false,
+            date: '',
+            time: '',
+            isShowScheduleView: false,
+            schedule: [
+                {
+                    id: 'đâs',
+                    name: 'Cổng vào',
+                },
+            ],
         };
     }
 
@@ -126,7 +104,7 @@ export default class MapScreen extends React.Component {
                     text: 'OK', onPress: async () => {
                         await this.getDataOfTask();
                         await this.setState({
-                            isCreateRoad:false,
+                            isCreateRoad: false,
                             isRenderSaveButton: false,
                         });
                     },
@@ -140,7 +118,7 @@ export default class MapScreen extends React.Component {
     createMarkerAPI = async () => {
         let createMarkerUrl =
             selfUrl + '/projects/' + this.state.projectId + '/tasks/' + this.state.taskId + '/marker';
-        console.log(createMarkerUrl);
+        // console.log(this.state.markers[this.state.markers.length - 1]);
         let response = await fetch(createMarkerUrl, {
             method: 'POST',
             headers: {
@@ -154,7 +132,7 @@ export default class MapScreen extends React.Component {
     };
 
     handlePressMap = async (e) => {
-        console.log(this.state.isCreateMarker);
+        // console.log(this.state.isCreateMarker);
         if (this.state.isCreateMarker) {
             await this.setState({
                 markers: [
@@ -165,14 +143,18 @@ export default class MapScreen extends React.Component {
                         coordinate: e.nativeEvent.coordinate,
                         title: '',
                         description: '',
+                        dateTime: {
+                            date: '',
+                            time: '',
+                        },
                     },
                 ],
                 isCreateMarker: false,
             });
-            await console.log(this.state.markers);
+            // await console.log(this.state.markers);
             await this.createMarkerAPI().then(async (res) => {
                 let response = await res.json();
-                console.log(response);
+                // console.log(response);
             });
             // console.log(this.state.markers[this.state.markers.length-1]);
         }
@@ -196,12 +178,12 @@ export default class MapScreen extends React.Component {
         // console.log(this.state.currentMarker.markerId)
         await this.deleteMarkerAPI(this.state.currentMarker.markerId).then(async (res) => {
             let deleteMarkerResponse = await res.json();
-            console.log(deleteMarkerResponse);
+            // console.log(deleteMarkerResponse);
         });
         await this.getDataOfTask();
     };
     renderSaveButton = () => {
-        if (!this.state.isShowFindingView) {
+        if (!this.state.isShowFindingView && !this.state.isShowScheduleView) {
             if (this.state.isRenderSaveButton) {
                 return (
                     <View style={styles.bottomButtonView}>
@@ -287,118 +269,155 @@ export default class MapScreen extends React.Component {
             } else {
                 return (
                     <View style={styles.bottomButtonView}>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            style={styles.TouchableOpacityStyle}
-                            onPress={() => this.RBSheet.open()}>
+                        <View style={styles.rowBottomButtonView}>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                style={styles.TouchableOpacityStyle}
+                                onPress={() => this.RBSheet.open()}>
 
-                            <Image
-                                //We are making FAB using TouchableOpacity with an image
-                                //We are using online image here
-                                source={require('../res/images/addMarker.png')}
-                                //You can use you project image Example below
-                                //source={require('./images/float-add-icon.png')}
-                                style={styles.FloatingButtonStyle}
-                            />
-                            <Text style={styles.textUnderImage}>
-                                Đánh dấu
-                            </Text>
+                                <Image
+                                    //We are making FAB using TouchableOpacity with an image
+                                    //We are using online image here
+                                    source={require('../res/images/addMarker.png')}
+                                    //You can use you project image Example below
+                                    //source={require('./images/float-add-icon.png')}
+                                    style={styles.FloatingButtonStyle}
+                                />
+                                <Text style={styles.textUnderImage}>
+                                    Đánh dấu
+                                </Text>
 
 
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            style={styles.TouchableOpacityStyle}
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                style={styles.TouchableOpacityStyle}
 
-                            onPress={() => {
-                                this.setState({
-                                    isCreateRoad: true,
-                                    isRenderSaveButton: true,
-                                });
-                                Toast.show('Đánh dấu và chọn 2 điểm để tạo đường đi', Toast.LONG);
+                                onPress={() => {
+                                    this.setState({
+                                        isCreateRoad: true,
+                                        isRenderSaveButton: true,
+                                    });
+                                    Toast.show('Đánh dấu và chọn 2 điểm để tạo đường đi', Toast.LONG);
 
-                            }}>
+                                }}>
 
-                            <Image
-                                //We are making FAB using TouchableOpacity with an image
-                                //We are using online image here
-                                source={require('../res/images/createRoad.png')}
-                                //You can use you project image Example below
-                                //source={require('./images/float-add-icon.png')}
-                                style={styles.FloatingButtonStyle2}
-                            />
-                            <Text style={styles.textUnderImage}>
-                                Tạo đường
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            style={styles.TouchableOpacityStyle}
+                                <Image
+                                    //We are making FAB using TouchableOpacity with an image
+                                    //We are using online image here
+                                    source={require('../res/images/createRoad.png')}
+                                    //You can use you project image Example below
+                                    //source={require('./images/float-add-icon.png')}
+                                    style={styles.FloatingButtonStyle2}
+                                />
+                                <Text style={styles.textUnderImage}>
+                                    Tạo đường
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.rowBottomButtonView}>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                style={styles.TouchableOpacityStyle}
 
-                            onPress={async () => {
-                                await this.setState({
-                                    isShowFindingView: true,
-                                });
-                                // await this.test();
-                                // await this.findRoadSheet.open();
-                                // this.RBSheet2.open()
+                                onPress={async () => {
+                                    await this.setState({
+                                        isShowFindingView: true,
+                                    });
+                                    // await this.test();
+                                    // await this.findRoadSheet.open();
+                                    // this.RBSheet2.open()
 
-                            }}>
+                                }}>
 
-                            <Image
-                                //We are making FAB using TouchableOpacity with an image
-                                //We are using online image here
-                                source={require('../res/images/findingRoad.png')}
-                                //You can use you project image Example below
-                                //source={require('./images/float-add-icon.png')}
-                                style={styles.FloatingButtonStyle3}
-                            />
-                            <Text style={styles.textUnderImage}>
-                                Tìm đường
-                            </Text>
-                        </TouchableOpacity>
+                                <Image
+                                    //We are making FAB using TouchableOpacity with an image
+                                    //We are using online image here
+                                    source={require('../res/images/findingRoad.png')}
+                                    //You can use you project image Example below
+                                    //source={require('./images/float-add-icon.png')}
+                                    style={styles.FloatingButtonStyle3}
+                                />
+                                <Text style={styles.textUnderImage}>
+                                    Tìm đường
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                style={styles.TouchableOpacityStyle}
+
+                                onPress={async () => {
+                                    // await this.createSchedule()
+                                    await this.setState({
+                                        isShowScheduleView: true,
+                                    });
+
+                                }}>
+
+                                <Image
+                                    //We are making FAB using TouchableOpacity with an image
+                                    //We are using online image here
+                                    source={require('../res/images/create_schedule.png')}
+                                    //You can use you project image Example below
+                                    //source={require('./images/float-add-icon.png')}
+                                    style={styles.FloatingButtonStyle3}
+                                />
+                                <Text style={styles.textUnderImage}>
+                                    Lịch trình
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
+
+
                 );
             }
         } else if (this.state.length !== 0) {
-            let distance
-            let distanceString
-            if(this.state.length>1000){
-                distance=Math.round(this.state.length * 100.0 / 1000) / 100
-                distanceString=distance+' km'
-            }else {
-                distance=Math.round(this.state.length * 1.0 )
-                distanceString=distance+' m'
-            }
-            let time=Math.round(this.state.length * 60 * 100.0/speed)/100
-            let timeString
-            let minutes
-            if(time-~~time>=0.5)
-            minutes=~~time+1
-            else minutes=~~time
-            console.log(minutes)
 
-            if (minutes>=60){
-                let minute=minutes%60
-                let hour=(minutes-minute)/60
-                timeString=hour+' giờ '+minute+' phút'
-            }else{
-                if(minutes===0) minutes=1
-                timeString=minutes+' phút'
+            let distance;
+            let distanceString;
+            if (this.state.length > 1000) {
+                distance = Math.round(this.state.length * 100.0 / 1000) / 100;
+                distanceString = distance + ' km';
+            } else {
+                distance = Math.round(this.state.length * 1.0);
+                distanceString = distance + ' m';
             }
-            let amountOfCalories=mountOfcalo/60*time
-            if(amountOfCalories-~~amountOfCalories>=0.5)
-            amountOfCalories=~~amountOfCalories+1
-            else amountOfCalories=~~amountOfCalories
-            let caloriesString=amountOfCalories+' kcal'
+            let time = Math.round(this.state.length * 60 * 100.0 / speed) / 100;
+            let timeString;
+            let minutes;
+            if (time - ~~time >= 0.5) {
+                minutes = ~~time + 1;
+            } else {
+                minutes = ~~time;
+            }
+            // console.log(minutes)
 
-            console.log(distance)
+            if (minutes >= 60) {
+                let minute = minutes % 60;
+                let hour = (minutes - minute) / 60;
+                timeString = hour + ' giờ ' + minute + ' phút';
+            } else {
+                if (minutes === 0) {
+                    minutes = 1;
+                }
+                timeString = minutes + ' phút';
+            }
+            let amountOfCalories = mountOfcalo / 60 * time;
+            if (amountOfCalories - ~~amountOfCalories >= 0.5) {
+                amountOfCalories = ~~amountOfCalories + 1;
+            } else {
+                amountOfCalories = ~~amountOfCalories;
+            }
+            let caloriesString = amountOfCalories + ' kcal';
+
+            console.log(distance);
             return (
                 <View style={styles.bottomButtonView2}>
-                    <View style={{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center'}}>
-                        <Text style={{marginLeft:10, fontSize:20,fontWeight:'bold'}}>Thông tin đoạn đường</Text>
+                    <View style={{flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+                        <Text style={{marginLeft: 10, fontSize: 20, fontWeight: 'bold'}}>Thông tin đoạn đường</Text>
                     </View>
-                    <View style={{flex:1,flexDirection:'row',alignItems:'center'}}>
+                    <View style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
                         <Image
                             //We are making FAB using TouchableOpacity with an image
                             //We are using online image here
@@ -407,10 +426,10 @@ export default class MapScreen extends React.Component {
                             //source={require('./images/float-add-icon.png')}
                             style={styles.FloatingButtonStyle4}
                         />
-                        <Text style={{marginLeft:10, fontSize:16,fontWeight:'bold'}}>Khoảng cách:</Text>
-                        <Text style={{marginLeft:10, fontSize:16,fontWeight:'bold'}}>{distanceString}</Text>
+                        <Text style={{marginLeft: 10, fontSize: 16, fontWeight: 'bold'}}>Khoảng cách:</Text>
+                        <Text style={{marginLeft: 10, fontSize: 16, fontWeight: 'bold'}}>{distanceString}</Text>
                     </View>
-                    <View style={{flex:1,flexDirection:'row',alignItems:'center'}}>
+                    <View style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
                         <Image
                             //We are making FAB using TouchableOpacity with an image
                             //We are using online image here
@@ -419,10 +438,10 @@ export default class MapScreen extends React.Component {
                             //source={require('./images/float-add-icon.png')}
                             style={styles.FloatingButtonStyle4}
                         />
-                        <Text  style={{marginLeft:10, fontSize:16,fontWeight:'bold'}}>Thời gian đi:</Text>
-                        <Text  style={{marginLeft:10, fontSize:16,fontWeight:'bold'}}>{timeString}</Text>
+                        <Text style={{marginLeft: 10, fontSize: 16, fontWeight: 'bold'}}>Thời gian đi:</Text>
+                        <Text style={{marginLeft: 10, fontSize: 16, fontWeight: 'bold'}}>{timeString}</Text>
                     </View>
-                    <View style={{flex:1,flexDirection:'row',alignItems:'center'}}>
+                    <View style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
                         <Image
                             //We are making FAB using TouchableOpacity with an image
                             //We are using online image here
@@ -431,8 +450,8 @@ export default class MapScreen extends React.Component {
                             //source={require('./images/float-add-icon.png')}
                             style={styles.FloatingButtonStyle4}
                         />
-                        <Text style={{marginLeft:10, fontSize:16,fontWeight:'bold'}}>Lượng calo tiêu thụ:</Text>
-                        <Text style={{marginLeft:10, fontSize:16,fontWeight:'bold'}}>{caloriesString}</Text>
+                        <Text style={{marginLeft: 10, fontSize: 16, fontWeight: 'bold'}}>Lượng calo tiêu thụ:</Text>
+                        <Text style={{marginLeft: 10, fontSize: 16, fontWeight: 'bold'}}>{caloriesString}</Text>
                     </View>
                 </View>
             );
@@ -447,6 +466,10 @@ export default class MapScreen extends React.Component {
         let data = {
             title: this.state.currentMarker.title,
             description: this.state.currentMarker.description,
+            dateTime: {
+                date: this.state.currentMarker.dateTime.date,
+                time: this.state.currentMarker.dateTime.time,
+            },
         };
         let response = await fetch(updateMarkerUrl, {
             method: 'PATCH',
@@ -479,8 +502,8 @@ export default class MapScreen extends React.Component {
 
     };
     handleCreateRoad = async (markerId, lat, long) => {
-        await console.log('current marker');
-        await console.log(this.state.currentMarker);
+        // await console.log('current marker');
+        // await console.log(this.state.currentMarker);
         if (this.state.coordinateLine.length === 1 && markerId === this.state.coordinateLine[0].markerId) {
             return;
         }
@@ -497,7 +520,7 @@ export default class MapScreen extends React.Component {
 
         // console.log(this.state.isCreateRoad)
         // console.log(this.state.coordinateLine)
-        await console.log(this.state.coordinateLine);
+        // await console.log(this.state.coordinateLine);
 
         if (this.state.coordinateLine.length === 2) {
             await this.setState({
@@ -521,7 +544,7 @@ export default class MapScreen extends React.Component {
                     },
                 ],
             });
-            await console.log(this.state.polylines);
+            // await console.log(this.state.polylines);
             await this.setState({
                 coordinateLine: [],
             });
@@ -546,7 +569,7 @@ export default class MapScreen extends React.Component {
     getDataOfTask = async () => {
         await this.getListTaskApi(this.state.auth).then(async (res) => {
             let response = await res.json();
-            console.log(response);
+            // console.log(response);
             await this.setState({
                 markers: response.markers,
                 polylines: response.polylines,
@@ -557,11 +580,11 @@ export default class MapScreen extends React.Component {
 
     updateRoadAPI = async (auth) => {
         let data = this.state.polylines;
-        console.log(data);
-        console.log(auth);
+        // console.log(data);
+        // console.log(auth);
         let updateRoadUrl =
             selfUrl + '/projects/' + this.state.projectId + '/tasks/' + this.state.taskId + '/roads';
-        console.log(updateRoadUrl);
+        // console.log(updateRoadUrl);
         let response = await fetch(updateRoadUrl, {
             method: 'PATCH',
             headers: {
@@ -700,10 +723,10 @@ export default class MapScreen extends React.Component {
         });
         // console.log(this.state.polylines)
         await this.state.polylines.map((line) => {
-            if(real===0){
-                graph[line.coordinates[0].markerId][line.coordinates[1].markerId] = line.length*line.weight;
-                graph[line.coordinates[1].markerId][line.coordinates[0].markerId] = line.length*line.weight;
-            }else{
+            if (real === 0) {
+                graph[line.coordinates[0].markerId][line.coordinates[1].markerId] = line.length * line.weight;
+                graph[line.coordinates[1].markerId][line.coordinates[0].markerId] = line.length * line.weight;
+            } else {
                 graph[line.coordinates[0].markerId][line.coordinates[1].markerId] = line.length;
                 graph[line.coordinates[1].markerId][line.coordinates[0].markerId] = line.length;
             }
@@ -712,14 +735,12 @@ export default class MapScreen extends React.Component {
         return graph;
 
     };
-    findRoad = async () => {
 
-    };
-    test = async (startingId,finishingId) => {
-        await this.getDataOfTask()
+    test = async (startingId, finishingId) => {
+        await this.getDataOfTask();
         console.log('Hello');
         let graph = await this.initData(0);
-        await console.log(graph);
+        // await console.log(graph);
         // let graph = {
         //     start: { A: 5, B: 2 },
         //     A: { start: 1, C: 4, D: 2 },
@@ -729,38 +750,94 @@ export default class MapScreen extends React.Component {
         //     finish: {},
         // };
         let result = await this.findShortestPath(graph, startingId, finishingId);
-        this.setState({
-            length:result.distance
-        })
-        await console.log('result:');
-        await console.log(result);
-        let roadResult = [];
-        let polylines = this.state.polylines;
-        for (let i = 0; i < result.path.length - 1; i++) {
-            let startPoint = result.path[i];
-            let finishPoint = result.path[i + 1];
-            for (let j = 0; j < polylines.length; j++) {
-                if ((polylines[j].coordinates[0].markerId === startPoint &&
-                    polylines[j].coordinates[1].markerId === finishPoint) ||
-                    (polylines[j].coordinates[1].markerId === startPoint &&
-                        polylines[j].coordinates[0].markerId === finishPoint)) {
-                    if(polylines[j].dangerous===true){
-                        polylines[j].strokeColor = 'red';
-                    }else{
-                        console.log(this.state.polylines[j].strokeColor);
-                        polylines[j].strokeColor = '#0b86da';
+        // console.log(result.distance)
+        if (result.distance !== 'Infinity') {
+            this.setState({
+                length: result.distance,
+            });
+            // await console.log('result:');
+            // await console.log(result);
+            let roadResult = [];
+            let polylines = this.state.polylines;
+            for (let i = 0; i < result.path.length - 1; i++) {
+                let startPoint = result.path[i];
+                let finishPoint = result.path[i + 1];
+                for (let j = 0; j < polylines.length; j++) {
+                    if ((polylines[j].coordinates[0].markerId === startPoint &&
+                        polylines[j].coordinates[1].markerId === finishPoint) ||
+                        (polylines[j].coordinates[1].markerId === startPoint &&
+                            polylines[j].coordinates[0].markerId === finishPoint)) {
+                        if (polylines[j].dangerous === true) {
+                            polylines[j].strokeColor = 'red';
+                        } else {
+                            // console.log(this.state.polylines[j].strokeColor);
+                            polylines[j].strokeColor = '#0b86da';
+                        }
+
+
+                        roadResult.unshift(this.state.polylines[j].roadId);
                     }
-
-
-                    roadResult.unshift(this.state.polylines[j].roadId);
                 }
             }
+            await this.setState({
+                polylines: polylines,
+            });
+            // await console.log(this.state.polylines);
+            // await console.log(roadResult)
+        } else {
+            Toast.show('Không thể tìm được đường đi', Toast.SHORT);
         }
-        await this.setState({
-            polylines: polylines,
-        });
-        await console.log(this.state.polylines);
-        // await console.log(roadResult)
+
+    };
+    findSchedule = async (startingId, finishingId) => {
+        let graph = await this.initData(0);
+        // await console.log(graph);
+        // let graph = {
+        //     start: { A: 5, B: 2 },
+        //     A: { start: 1, C: 4, D: 2 },
+        //     B: { A: 8, D: 7 },
+        //     C: { D: 6, finish: 3 },
+        //     D: { finish: 1 },
+        //     finish: {},
+        // };
+        let result = await this.findShortestPath(graph, startingId, finishingId);
+        // console.log(result.distance)
+        if (result.distance !== 'Infinity') {
+            this.setState({
+                length: result.distance,
+            });
+            // await console.log('result:');
+            // await console.log(result);
+            let roadResult = [];
+            let polylines = this.state.polylines;
+            for (let i = 0; i < result.path.length - 1; i++) {
+                let startPoint = result.path[i];
+                let finishPoint = result.path[i + 1];
+                for (let j = 0; j < polylines.length; j++) {
+                    if ((polylines[j].coordinates[0].markerId === startPoint &&
+                        polylines[j].coordinates[1].markerId === finishPoint) ||
+                        (polylines[j].coordinates[1].markerId === startPoint &&
+                            polylines[j].coordinates[0].markerId === finishPoint)) {
+                        if (polylines[j].dangerous === true) {
+                            polylines[j].strokeColor = 'red';
+                        } else {
+                            // console.log(this.state.polylines[j].strokeColor);
+                            polylines[j].strokeColor = '#0b86da';
+                        }
+
+
+                        roadResult.unshift(this.state.polylines[j].roadId);
+                    }
+                }
+            }
+            await this.setState({
+                polylines: polylines,
+            });
+            // await console.log(this.state.polylines);
+            // await console.log(roadResult)
+        } else {
+            Toast.show('Không thể tìm được đường đi', Toast.SHORT);
+        }
     };
     showFindingView = () => {
         let items = [];
@@ -785,13 +862,13 @@ export default class MapScreen extends React.Component {
                                                   onPress={async () => {
                                                       await this.setState({
                                                           isShowFindingView: false,
-                                                          length:0,
-                                                          startingId:'',
-                                                          startingPoint:'',
-                                                          finishingId:'',
-                                                          finishingPoint:''
+                                                          length: 0,
+                                                          startingId: '',
+                                                          startingPoint: '',
+                                                          finishingId: '',
+                                                          finishingPoint: '',
                                                       });
-                                                      await this.getDataOfTask()
+                                                      await this.getDataOfTask();
                                                   }}>
                                     <Image style={{height: 20, width: 20}} source={require('../res/images/back.png')}/>
                                 </TouchableOpacity>
@@ -865,51 +942,60 @@ export default class MapScreen extends React.Component {
             } else {
                 return (
                     <View style={styles.testView2}>
+                        <TouchableOpacity style={{
+                            height: 40, width: 40, justifyContent: 'center', alignItems: 'center'
+                            , marginLeft: 5, marginTop: 10, marginBottom: 10,
+                        }}
+                                          onPress={async () => {
+                                              await this.setState({
+                                                  isDisplaySearchDropdown: false,
+                                              });
+                                              await this.getDataOfTask();
+                                          }}>
+                            <Image style={{height: 20, width: 20}} source={require('../res/images/back.png')}/>
+                        </TouchableOpacity>
                         <SearchableDropdown
                             onItemSelect={(item) => {
                                 if (this.state.placeholderSearch === 'Chọn điểm khởi hành') {
-                                    if(item.id===this.state.finishingId){
+                                    if (item.id === this.state.finishingId) {
                                         this.setState({
                                             isDisplaySearchDropdown: false,
                                             startingPoint: item.name,
-                                            startingId:item.id,
+                                            startingId: item.id,
                                             finishingPoint: '',
-                                            finishingId:''
-                                        })
-                                    }else{
+                                            finishingId: '',
+                                        });
+                                    } else {
                                         this.setState({
                                             isDisplaySearchDropdown: false,
                                             startingPoint: item.name,
-                                            startingId:item.id
+                                            startingId: item.id,
                                         });
                                     }
 
                                 } else {
-                                    if(item.id===this.state.startingId){
+                                    if (item.id === this.state.startingId) {
                                         this.setState({
                                             isDisplaySearchDropdown: false,
-                                            startingPoint:'' ,
-                                            startingId:'',
-                                            finishingPoint:item.name,
-                                            finishingId:item.id
-                                        })
-                                    }else{
+                                            startingPoint: '',
+                                            startingId: '',
+                                            finishingPoint: item.name,
+                                            finishingId: item.id,
+                                        });
+                                    } else {
                                         this.setState({
                                             isDisplaySearchDropdown: false,
                                             finishingPoint: item.name,
-                                            finishingId:item.id
+                                            finishingId: item.id,
                                         });
                                     }
 
                                 }
                                 if (this.state.startingPoint !== '' && this.state.finishingPoint !== '') {
-                                    this.test(this.state.startingId,this.state.finishingId);
+                                    this.test(this.state.startingId, this.state.finishingId);
                                 }
 
-                                // console.log(item)
-                                // const items = this.state.selectedItems;
-                                // items.push(item)
-                                // this.setState({ selectedItems: items });
+
                             }}
                             containerStyle={{padding: 5}}
                             // onRemoveItem={(item, index) => {
@@ -918,7 +1004,7 @@ export default class MapScreen extends React.Component {
                             // }}
                             itemStyle={{
                                 height: 40,
-                                width: width,
+                                width: width - 70,
                                 padding: 10,
                                 marginTop: 2,
                                 backgroundColor: '#ddd',
@@ -937,7 +1023,7 @@ export default class MapScreen extends React.Component {
                                     underlineColorAndroid: 'transparent',
                                     style: {
                                         height: 40,
-                                        width: width - 10,
+                                        width: width - 70,
                                         padding: 12,
                                         margin: 5,
                                         borderWidth: 1,
@@ -956,6 +1042,157 @@ export default class MapScreen extends React.Component {
                     </View>
                 );
             }
+        }
+    };
+    showScheduleView = () => {
+        if (this.state.isShowScheduleView) {
+            return (
+                <View style={styles.scheduleView}>
+                    <View style={{height: 200, width: 50}}>
+                        <TouchableOpacity style={{
+                            height: 40, width: 40, justifyContent: 'center', alignItems: 'center'
+                            , marginLeft: 5, marginTop: 10, marginBottom: 10,
+                        }}
+                                          onPress={async () => {
+                                              await this.setState({
+                                                  isShowScheduleView: false,
+                                              });
+                                              await this.getDataOfTask();
+                                          }}>
+                            <Image style={{height: 20, width: 20}} source={require('../res/images/back.png')}/>
+                        </TouchableOpacity>
+                    </View>
+                    <ScrollView style={styles.scrollScheduleView}>
+                        <View style={{flex: 1, flexDirection: 'row'}}>
+                            <FlatList
+                                data={this.state.schedule}
+                                renderItem={({item, index}) => (
+                                    <View style={styles.itemView}>
+                                        <TextInput
+                                            style={styles.scheduleInput}
+                                            onTouchStart={() => this.setState({
+                                                isDisplaySearchDropdown: true,
+                                                placeholderSearch: 'Chọn địa điểm',
+                                            })}
+                                            placeholder={'Chọn địa điểm'}
+                                            value={item.name}
+                                            // onChangeText={(name) => {
+                                            //     console.log(item)
+                                            //     // this.setState({
+                                            //     //     finishingPoint: finishingPoint,
+                                            //     // });
+                                            // }
+                                            // }
+                                        />
+                                        <TouchableOpacity style={{
+                                            height: 40, width: 40, justifyContent: 'center', alignItems: 'center',
+
+                                        }} onPress={async () => {
+                                                let newSchedule=this.state.schedule.slice(0, index).concat(this.state.schedule.slice(index + 1))
+                                                await this.setState({
+                                                    schedule:newSchedule
+                                                })
+                                                await console.log(this.state.schedule)
+                                        }}>
+                                            <Image style={{height: 20, width: 20}}
+                                                   source={require('../res/images/x-symbol.png')}/>
+                                        </TouchableOpacity>
+                                    </View>
+                                )
+                                }
+                                keyExtractor={item => item.id}
+                            />
+                        </View>
+                        {/*<View style={{height: 40, width: width - 50, flexDirection: 'row', alignItems: 'center'}}>*/}
+                        <TouchableOpacity style={{
+                            height: 40,
+                            width: 150,
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginLeft: 20,
+                        }}
+                                          onPress={async () => {
+                                              // console.log(this.state.schedule)
+                                              // let newSchedule=await this.state.schedule.unshift({
+                                              //     id:'',
+                                              //     name:''
+                                              // })
+                                              // console.log("HI")
+                                              // console.log(newSchedule)
+                                              await this.setState({
+                                                  schedule: [
+                                                      ...this.state.schedule,
+                                                      {
+                                                          id: '',
+                                                          name: '',
+                                                      },
+                                                  ],
+                                              });
+
+                                          }}>
+                            <Image style={{height: 30, width: 30}} source={require('../res/images/add_icon.png')}/>
+                            <Text style={{fontSize: 15, marginLeft: 5}}>Thêm địa điểm</Text>
+                        </TouchableOpacity>
+
+                        {/*</View>*/}
+                    </ScrollView>
+                </View>
+            );
+        }
+
+    };
+    handleConfirmDate = async (date) => {
+        let year = await date.getFullYear();
+        let month = await date.getMonth();
+        let day = await date.getDate();
+        let fullDate = await day + '/' + month + '/' + year;
+        await this.setState({
+            currentMarker: {
+                coordinate: this.state.currentMarker.coordinate,
+                title: this.state.currentMarker.title,
+                description: this.state.currentMarker.description,
+                markerId: this.state.currentMarker.markerId,
+                markerType: this.state.currentMarker.markerType,
+                dateTime: {
+                    date: fullDate,
+                    time: this.state.currentMarker.dateTime.time,
+                },
+
+            },
+            date: fullDate,
+            isDatePickerVisible: false,
+        });
+        await console.log(this.state.currentMarker.dateTime.date);
+
+    };
+    handleConfirmTime = async (time) => {
+        let hour = await time.getHours();
+        let minutes = await time.getMinutes();
+        let fullTime = await hour + ':' + minutes;
+        await this.setState({
+            currentMarker: {
+                coordinate: this.state.currentMarker.coordinate,
+                title: this.state.currentMarker.title,
+                description: this.state.currentMarker.description,
+                markerId: this.state.currentMarker.markerId,
+                markerType: this.state.currentMarker.markerType,
+                dateTime: {
+                    date: this.state.currentMarker.dateTime.date,
+                    time: fullTime,
+                },
+            },
+            time: fullTime,
+            isTimePickerVisible: false,
+        });
+        await console.log(this.state.currentMarker.dateTime.time);
+
+    };
+
+    createSchedule = async () => {
+        let scheduleList = ['8a0jrGBUHdaI', 'MhgnpiNBsVQV', '1j60YcehZkq7'];
+        for (let i = 0; i < scheduleList.length - 1; i++) {
+            await this.findSchedule(scheduleList[i], scheduleList[i + 1]);
         }
     };
 
@@ -981,6 +1218,8 @@ export default class MapScreen extends React.Component {
         // await this.state.markers.map(async (marker)=>{
         //     await marker.markerId.showCallout()
         // })
+        // const link2 = await AsyncStorage.getItem(this.state.taskId);
+        // await console.log(link2)
     }
 
     render() {
@@ -1027,9 +1266,8 @@ export default class MapScreen extends React.Component {
                                 strokeWidth={5}
                                 tappable={true}
                                 onPress={async (e) => {
-                                    if(!this.state.isCreateRoad){
+                                    if (!this.state.isCreateRoad) {
                                         Alert.alert(
-
                                             'Cảnh báo',
                                             'Bạn có chắc chắn muốn xóa đường đi?',
                                             [
@@ -1062,6 +1300,7 @@ export default class MapScreen extends React.Component {
                         // let imageLink = ['../res/images/normalMarker.png', '../res/images/takingPhotoLocation.png', '../res/images/helpMarker.png', '../res/images/warningMarker.png'];
                         // let link2=imageLink[0]
                         // console.log(link)
+                        // console.log(marker);
                         switch (marker.markerType) {
                             case 0: {
                                 return (
@@ -1075,7 +1314,13 @@ export default class MapScreen extends React.Component {
 
                                             await this.setState({
                                                 currentMarker: marker,
+
                                             });
+                                            // await this.setState({
+                                            //     date:this.state.currentMarker.dateTime.date,
+                                            //     time:this.state.currentMarker.dateTime.time
+                                            // })
+                                            await console.log(this.state.currentMarker.dateTime.date);
                                             // await console.log(marker.markerId);
                                             // await console.log(this.state.currentMarker);
                                             // console.log(marker);
@@ -1221,13 +1466,33 @@ export default class MapScreen extends React.Component {
                         }
                         marker.markerId.showCallout();
                     })}
-
                 </MapView>
-                {/*<View style={styles.bottomView}>*/}
+
                 {this.showFindingView()}
                 {this.renderSaveButton()}
+                {this.showScheduleView()}
 
-
+                <DateTimePickerModal
+                    isVisible={this.state.isDatePickerVisible}
+                    mode="date"
+                    onConfirm={this.handleConfirmDate}
+                    onCancel={() => {
+                        this.setState({
+                            isDatePickerVisible: false,
+                        });
+                    }}
+                />
+                <DateTimePickerModal
+                    isVisible={this.state.isTimePickerVisible}
+                    mode="time"
+                    onConfirm={this.handleConfirmTime}
+                    onCancel={() => {
+                        this.setState({
+                            isTimePickerVisible: false,
+                        });
+                    }}
+                />
+                {/*<View style={styles.bottomView}>*/}
                 <RBSheet
                     ref={ref => {
                         this.RBSheet = ref;
@@ -1336,7 +1601,7 @@ export default class MapScreen extends React.Component {
                     ref={ref => {
                         this.RBSheet2 = ref;
                     }}
-                    height={350}
+                    height={450}
                     closeOnDragDown={true}
                     openDuration={250}
                     customStyles={{
@@ -1351,44 +1616,76 @@ export default class MapScreen extends React.Component {
                             <Text style={styles.title}>Thông tin địa điểm</Text>
                         </View>
                         <View style={styles.detailInfoView}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder={'Tên địa điểm'}
-                                value={this.state.currentMarker.title}
-                                onChangeText={(title) => {
-                                    this.setState({
-                                        currentMarker: {
-                                            coordinate: this.state.currentMarker.coordinate,
-                                            title: title,
-                                            description: this.state.currentMarker.description,
-                                            markerId: this.state.currentMarker.markerId,
-                                            markerType: this.state.currentMarker.markerType,
-                                        },
-                                    });
-                                    // console.log(this.state.currentMarker);
-                                }
 
-                                }
-                            />
-                            <TextInput
-                                style={styles.input2}
-                                placeholder={'Mô tả'}
-                                value={this.state.currentMarker.description}
-                                onChangeText={(description) => {
-                                    this.setState({
-                                        currentMarker: {
-                                            coordinate: this.state.currentMarker.coordinate,
-                                            title: this.state.currentMarker.title,
-                                            description: description,
-                                            markerId: this.state.currentMarker.markerId,
-                                            markerType: this.state.currentMarker.markerType,
-                                        },
-                                    });
-                                    // console.log(this.state.currentMarker);
-                                }
-                                }
-                            />
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15, marginRight: 2}}>Tên địa điểm:</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder={'Tên địa điểm'}
+                                    value={this.state.currentMarker.title}
+                                    onChangeText={(title) => {
+                                        this.setState({
+                                            currentMarker: {
+                                                dateTime: this.state.currentMarker.dateTime,
+                                                coordinate: this.state.currentMarker.coordinate,
+                                                title: title,
+                                                description: this.state.currentMarker.description,
+                                                markerId: this.state.currentMarker.markerId,
+                                                markerType: this.state.currentMarker.markerType,
+                                            },
+                                        });
+                                        // console.log(this.state.currentMarker);
+                                    }
+
+                                    }
+                                />
+                            </View>
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15, marginRight: 50}}>Mô tả:</Text>
+                                <TextInput
+                                    style={styles.input2}
+                                    placeholder={'Mô tả'}
+                                    value={this.state.currentMarker.description}
+                                    onChangeText={(description) => {
+                                        this.setState({
+                                            currentMarker: {
+                                                dateTime: this.state.currentMarker.dateTime,
+                                                coordinate: this.state.currentMarker.coordinate,
+                                                title: this.state.currentMarker.title,
+                                                description: description,
+                                                markerId: this.state.currentMarker.markerId,
+                                                markerType: this.state.currentMarker.markerType,
+                                            },
+                                        });
+                                        // console.log(this.state.currentMarker);
+                                    }
+                                    }
+                                />
+                            </View>
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15}}>Thời gian đến:</Text>
+                                <TextInput
+                                    style={styles.input2}
+                                    placeholder={'Thời gian đến'}
+                                    value={this.state.currentMarker.dateTime.time}
+                                    onTouchStart={() => this.setState({
+                                        isTimePickerVisible: true,
+                                    })}
+                                />
+                            </View>
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15, marginRight: 30}}>Ngày đến:</Text>
+                                <TextInput
+                                    style={styles.input2}
+                                    placeholder={'Ngày đến'}
+                                    value={this.state.currentMarker.dateTime.date}
+                                    onTouchStart={() => this.setState({
+                                        isDatePickerVisible: true,
+                                    })}
+                                />
+                            </View>
                         </View>
+
                         <View style={styles.buttonView}>
                             <TouchableOpacity
                                 style={styles.formalAcceptButton}
@@ -1512,6 +1809,27 @@ export default class MapScreen extends React.Component {
 
 
 const styles = StyleSheet.create({
+    itemView: {
+        height: 60,
+        width: width,
+        flexDirection: 'row',
+        marginLeft: 10,
+        alignItems: 'center',
+    },
+    rowBottomButtonView: {
+        height: 80,
+        width: width,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        // backgroundColor:'red'
+    },
+    dateTimeView: {
+        height: 78,
+        width: width,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     testView: {
         height: 130,
         width: width,
@@ -1522,8 +1840,25 @@ const styles = StyleSheet.create({
         bottom: 0,
         backgroundColor: 'white',
     },
+    scheduleView: {
+        height: 200,
+        width: width,
+        flexDirection: 'row',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'white',
+    },
+    scrollScheduleView: {
+        height: 200,
+        width: width - 50,
+
+    },
     testView2: {
-        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
         height: 200,
         width: width,
         position: 'absolute',
@@ -1576,7 +1911,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     detailInfoView: {
-        flex: 3,
+        flex: 4,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1602,15 +1937,13 @@ const styles = StyleSheet.create({
     bottomButtonView: {
         height: 150,
         width: width,
-
         justifyContent: 'flex-end',
         alignItems: 'flex-end',
     },
     bottomButtonView2: {
         height: 150,
         width: width,
-        backgroundColor:'white',
-
+        backgroundColor: 'white',
 
 
     },
@@ -1647,7 +1980,7 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
         width: 25,
         height: 25,
-        marginLeft:15
+        marginLeft: 15,
         //backgroundColor:'black'
     },
     bottomView: {
@@ -1675,8 +2008,7 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 50,
-        width: 300,
-
+        width: 250,
         borderWidth: 1,
         borderColor: '#afb4b3',
         color: 'black',
@@ -1688,7 +2020,6 @@ const styles = StyleSheet.create({
     input1: {
         height: 40,
         width: 250,
-
         borderWidth: 1,
         borderColor: '#afb4b3',
         color: 'black',
@@ -1699,8 +2030,8 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
     },
     input2: {
-        height: 100,
-        width: 300,
+        height: 50,
+        width: 250,
         borderWidth: 1,
         borderColor: '#afb4b3',
         color: 'black',
@@ -1719,6 +2050,20 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginLeft: 15,
         marginRight: 15,
+        paddingLeft: 20,
+    },
+    scheduleInput: {
+        height: 40,
+        width: 250,
+        borderWidth: 1,
+        borderColor: '#afb4b3',
+        color: 'black',
+        fontSize: 15,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginLeft: 15,
+        marginRight: 15,
+        marginTop: 10,
         paddingLeft: 20,
     },
     container: {
