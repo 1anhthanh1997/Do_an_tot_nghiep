@@ -1,26 +1,21 @@
 import React from 'react';
 import {
-    StyleSheet,
-    View,
-    Text,
-    Dimensions,
-    Platform,
-    Image,
-    TextInput,
-    ScrollView,
-    TouchableOpacity,
     Alert,
+    Dimensions,
+    FlatList,
+    Image,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Toast from 'react-native-simple-toast';
-import MapView, {
-    MAP_TYPES,
-    PROVIDER_DEFAULT,
-    UrlTile,
-    Marker,
-    Polyline,
-} from 'react-native-maps';
+import MapView, {MAP_TYPES, Marker, Polyline, PROVIDER_DEFAULT, UrlTile} from 'react-native-maps';
 import SearchableDropdown from 'react-native-searchable-dropdown';
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+import styles from '../res/styles';
 
 import RBSheet from 'react-native-raw-bottom-sheet';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -47,7 +42,12 @@ export default class MapScheduleScreen extends React.Component {
                 longitudeDelta: LONGITUDE_DELTA,
             },
             markers: [],
-            currentMarker: '',
+            currentMarker:{
+                dateTime:{
+                    date:'',
+                    time:''
+                }
+            },
             isCreateMarker: false,
             markerType: 0,
             polylines: [],
@@ -67,7 +67,9 @@ export default class MapScheduleScreen extends React.Component {
             placeholderSearch: '',
             length: 0,
             isDatePickerVisible:true,
-            isTimePickerVisible:true
+            isTimePickerVisible: true,
+            isShowScheduleView: false,
+            schedule:[]
         };
     }
 
@@ -89,34 +91,66 @@ export default class MapScheduleScreen extends React.Component {
     };
 
     renderSaveButton = () => {
-        if (!this.state.isShowFindingView) {
+        if (!this.state.isShowFindingView && !this.state.isShowScheduleView) {
                 return (
                     <View style={styles.bottomButtonView}>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            style={styles.TouchableOpacityStyle}
-                            onPress={async () => {
-                                await this.setState({
-                                    isShowFindingView: true,
-                                });
-                                // await this.test();
-                                // await this.findRoadSheet.open();
-                                // this.RBSheet2.open()
+                        <View style={styles.rowBottomButtonView}>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                style={styles.TouchableOpacityStyle}
 
-                            }}>
+                                onPress={async () => {
+                                    await this.setState({
+                                        isShowFindingView: true,
+                                    });
+                                    // await this.test();
+                                    // await this.findRoadSheet.open();
+                                    // this.RBSheet2.open()
 
-                            <Image
-                                //We are making FAB using TouchableOpacity with an image
-                                //We are using online image here
-                                source={require('../res/images/findingRoad.png')}
-                                //You can use you project image Example below
-                                //source={require('./images/float-add-icon.png')}
-                                style={styles.FloatingButtonStyle3}
-                            />
-                            <Text style={styles.textUnderImage}>
-                                Tìm đường
-                            </Text>
-                        </TouchableOpacity>
+                                }}>
+
+                                <Image
+                                    //We are making FAB using TouchableOpacity with an image
+                                    //We are using online image here
+                                    source={require('../res/images/findingRoad.png')}
+                                    //You can use you project image Example below
+                                    //source={require('./images/float-add-icon.png')}
+                                    style={styles.FloatingButtonStyle3}
+                                />
+                                <Text style={styles.textUnderImage}>
+                                    Tìm đường
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                style={styles.TouchableOpacityStyle}
+
+                                onPress={async () => {
+                                    // await this.createSchedule()
+                                    await this.setState({
+                                        isShowScheduleView: true,
+                                    });
+                                    for (let i = 0; i < this.state.schedule.length - 1; i++) {
+                                        if (this.state.schedule[i].id !== '' && this.state.schedule[i + 1].id !== '') {
+                                            await this.findSchedule(this.state.schedule[i].id, this.state.schedule[i + 1].id);
+                                        }
+                                    }
+
+                                }}>
+
+                                <Image
+                                    //We are making FAB using TouchableOpacity with an image
+                                    //We are using online image here
+                                    source={require('../res/images/create_schedule.png')}
+                                    //You can use you project image Example below
+                                    //source={require('./images/float-add-icon.png')}
+                                    style={styles.FloatingButtonStyle3}
+                                />
+                                <Text style={styles.textUnderImage}>
+                                    Lịch trình
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 );
 
@@ -224,6 +258,7 @@ export default class MapScheduleScreen extends React.Component {
             await this.setState({
                 markers: response.markers,
                 polylines: response.polylines,
+                schedule:response.schedule
             });
 
         });
@@ -597,7 +632,104 @@ export default class MapScheduleScreen extends React.Component {
             }
         }
     };
+    findSchedule = async (startingId, finishingId) => {
+        console.log(startingId+" "+finishingId)
+        let graph = await this.initData(0);
+        // await console.log(graph);
+        // let graph = {
+        //     start: { A: 5, B: 2 },
+        //     A: { start: 1, C: 4, D: 2 },
+        //     B: { A: 8, D: 7 },
+        //     C: { D: 6, finish: 3 },
+        //     D: { finish: 1 },
+        //     finish: {},
+        // };
+        let result = await this.findShortestPath(graph, startingId, finishingId);
+        // console.log(result.distance)
+        if (result.distance !== 'Infinity') {
+            this.setState({
+                length: this.state.length+result.distance,
+            });
+            // await console.log('result:');
+            // await console.log(result);
+            let roadResult = [];
+            let polylines = this.state.polylines;
+            for (let i = 0; i < result.path.length - 1; i++) {
+                let startPoint = result.path[i];
+                let finishPoint = result.path[i + 1];
+                for (let j = 0; j < polylines.length; j++) {
+                    if ((polylines[j].coordinates[0].markerId === startPoint &&
+                        polylines[j].coordinates[1].markerId === finishPoint) ||
+                        (polylines[j].coordinates[1].markerId === startPoint &&
+                            polylines[j].coordinates[0].markerId === finishPoint)) {
+                        if (polylines[j].dangerous === true) {
+                            polylines[j].strokeColor = 'red';
+                        } else {
+                            // console.log(this.state.polylines[j].strokeColor);
+                            polylines[j].strokeColor = '#0b86da';
+                        }
 
+
+                        roadResult.unshift(this.state.polylines[j].roadId);
+                    }
+                }
+            }
+            await this.setState({
+                polylines: polylines,
+            });
+            // await console.log(this.state.polylines);
+            // await console.log(roadResult)
+        } else {
+            Toast.show('Không thể tìm được đường đi', Toast.SHORT);
+        }
+    };
+    showScheduleView = () => {
+        if (this.state.isShowScheduleView) {
+            return (
+                <View style={styles.scheduleView}>
+                    <View style={{height: 200, width: 50}}>
+                        <TouchableOpacity style={{
+                            height: 40, width: 40, justifyContent: 'center', alignItems: 'center'
+                            , marginLeft: 5, marginTop: 10, marginBottom: 10,
+                        }}
+                                          onPress={async () => {
+                                              await this.setState({
+                                                  isShowScheduleView: false,
+                                                  length:0,
+                                              });
+                                              await this.getDataOfTask();
+                                          }}>
+                            <Image style={{height: 20, width: 20}} source={require('../res/images/back.png')}/>
+                        </TouchableOpacity>
+                    </View>
+                    <ScrollView style={styles.scrollScheduleView}>
+                        <View style={{flex: 1, flexDirection: 'row'}}>
+                            <FlatList
+                                data={this.state.schedule}
+                                renderItem={({item, index}) => (
+                                    <View style={styles.itemView}>
+                                        <TextInput
+                                            style={styles.scheduleInput}
+                                            placeholder={'Chọn địa điểm'}
+                                            value={item.name}
+
+                                        />
+
+                                    </View>
+                                )
+                                }
+                                keyExtractor={item => item.id}
+                            />
+                        </View>
+                        {/*<View style={{height: 40, width: width - 50, flexDirection: 'row', alignItems: 'center'}}>*/}
+
+
+                        {/*</View>*/}
+                    </ScrollView>
+                </View>
+            );
+        }
+    };
     async componentDidMount() {
         const {link} = await this.props.route.params;
         const {taskId} = await this.props.route.params;
@@ -864,12 +996,13 @@ export default class MapScheduleScreen extends React.Component {
 
                 {this.showFindingView()}
                 {this.renderSaveButton()}
+                {this.showScheduleView()}
 
                 <RBSheet
                     ref={ref => {
                         this.RBSheet2 = ref;
                     }}
-                    height={350}
+                    height={450}
                     closeOnDragDown={true}
                     openDuration={250}
                     customStyles={{
@@ -884,44 +1017,76 @@ export default class MapScheduleScreen extends React.Component {
                             <Text style={styles.title}>Thông tin địa điểm</Text>
                         </View>
                         <View style={styles.detailInfoView}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder={'Tên địa điểm'}
-                                value={this.state.currentMarker.title}
-                                onChangeText={(title) => {
-                                    this.setState({
-                                        currentMarker: {
-                                            coordinate: this.state.currentMarker.coordinate,
-                                            title: title,
-                                            description: this.state.currentMarker.description,
-                                            markerId: this.state.currentMarker.markerId,
-                                            markerType: this.state.currentMarker.markerType,
-                                        },
-                                    });
-                                    // console.log(this.state.currentMarker);
-                                }
 
-                                }
-                            />
-                            <TextInput
-                                style={styles.input2}
-                                placeholder={'Mô tả'}
-                                value={this.state.currentMarker.description}
-                                onChangeText={(description) => {
-                                    this.setState({
-                                        currentMarker: {
-                                            coordinate: this.state.currentMarker.coordinate,
-                                            title: this.state.currentMarker.title,
-                                            description: description,
-                                            markerId: this.state.currentMarker.markerId,
-                                            markerType: this.state.currentMarker.markerType,
-                                        },
-                                    });
-                                    // console.log(this.state.currentMarker);
-                                }
-                                }
-                            />
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15, marginRight: 2}}>Tên địa điểm:</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder={'Tên địa điểm'}
+                                    value={this.state.currentMarker.title}
+                                    onChangeText={(title) => {
+                                        this.setState({
+                                            currentMarker: {
+                                                dateTime: this.state.currentMarker.dateTime,
+                                                coordinate: this.state.currentMarker.coordinate,
+                                                title: title,
+                                                description: this.state.currentMarker.description,
+                                                markerId: this.state.currentMarker.markerId,
+                                                markerType: this.state.currentMarker.markerType,
+                                            },
+                                        });
+                                        // console.log(this.state.currentMarker);
+                                    }
+
+                                    }
+                                />
+                            </View>
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15, marginRight: 50}}>Mô tả:</Text>
+                                <TextInput
+                                    style={styles.input2}
+                                    placeholder={'Mô tả'}
+                                    value={this.state.currentMarker.description}
+                                    onChangeText={(description) => {
+                                        this.setState({
+                                            currentMarker: {
+                                                dateTime: this.state.currentMarker.dateTime,
+                                                coordinate: this.state.currentMarker.coordinate,
+                                                title: this.state.currentMarker.title,
+                                                description: description,
+                                                markerId: this.state.currentMarker.markerId,
+                                                markerType: this.state.currentMarker.markerType,
+                                            },
+                                        });
+                                        // console.log(this.state.currentMarker);
+                                    }
+                                    }
+                                />
+                            </View>
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15}}>Thời gian đến:</Text>
+                                <TextInput
+                                    style={styles.input2}
+                                    placeholder={'Thời gian đến'}
+                                    value={this.state.currentMarker.dateTime.time}
+                                    onTouchStart={() => this.setState({
+                                        isTimePickerVisible: true,
+                                    })}
+                                />
+                            </View>
+                            <View style={styles.dateTimeView}>
+                                <Text style={{marginLeft: 15, fontSize: 15, marginRight: 30}}>Ngày đến:</Text>
+                                <TextInput
+                                    style={styles.input2}
+                                    placeholder={'Ngày đến'}
+                                    value={this.state.currentMarker.dateTime.date}
+                                    onTouchStart={() => this.setState({
+                                        isDatePickerVisible: true,
+                                    })}
+                                />
+                            </View>
                         </View>
+
                         <View style={styles.buttonView}>
                             <TouchableOpacity
                                 style={styles.formalAcceptButton}
@@ -946,351 +1111,13 @@ export default class MapScheduleScreen extends React.Component {
 
                     </ScrollView>
                 </RBSheet>
-                <RBSheet
-                    ref={ref => {
-                        this.findRoadSheet = ref;
-                    }}
-                    height={350}
-                    closeOnDragDown={true}
-                    openDuration={250}
-                    customStyles={{
-                        container: {
-                            justifyContent: 'center',
-                            alignItems: 'center',
 
-                        },
-                    }}
-                >
-                    <ScrollView style={{flex: 1}}>
-                        <View style={styles.titleView}>
-                            <Text style={styles.title}>Tìm đường đi</Text>
-                        </View>
-                        <View style={styles.detailInfoView}>
-                            <View
-                                style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-                                <Image style={{height: 15, width: 15}}
-                                       source={require('../res/images/startingPoint.png')}/>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder={'Chọn địa điểm bắt đầu'}
-                                    value={this.state.currentMarker.title}
-                                    onChangeText={(title) => {
-                                        this.setState({
-                                            currentMarker: {
-                                                coordinate: this.state.currentMarker.coordinate,
-                                                title: title,
-                                                description: this.state.currentMarker.description,
-                                                markerId: this.state.currentMarker.markerId,
-                                                markerType: this.state.currentMarker.markerType,
-                                            },
-                                        });
-                                        // console.log(this.state.currentMarker);
-                                    }
-
-                                    }
-                                />
-                            </View>
-                            <View
-                                style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-                                <Image style={{height: 20, width: 20}}
-                                       source={require('../res/images/normalMarker_96x96.png')}/>
-                                <TextInput
-                                    style={styles.input3}
-                                    placeholder={'Chọn điểm đến'}
-                                    value={this.state.currentMarker.description}
-                                    onChangeText={(description) => {
-                                        this.setState({
-                                            currentMarker: {
-                                                coordinate: this.state.currentMarker.coordinate,
-                                                title: this.state.currentMarker.title,
-                                                description: description,
-                                                markerId: this.state.currentMarker.markerId,
-                                                markerType: this.state.currentMarker.markerType,
-                                            },
-                                        });
-                                        // console.log(this.state.currentMarker);
-                                    }
-                                    }
-                                />
-                            </View>
-                        </View>
-                        <View style={styles.buttonView}>
-                            <TouchableOpacity
-                                style={styles.formalAcceptButton}
-                                onPress={() => {
-                                    this.updateMarkerData();
-                                }}
-
-                            >
-                                <Text style={styles.textButton}>Tìm đường</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.formalCancelButton}
-                                onPress={async () => {
-                                    await this.deleteMarker();
-                                    await this.RBSheet2.close();
-                                }}
-                            >
-                                <Text style={styles.textButton}>Xóa đánh dấu</Text>
-                            </TouchableOpacity>
-
-                        </View>
-
-                    </ScrollView>
-                </RBSheet>
             </View>
         );
     }
 }
 
 
-const styles = StyleSheet.create({
-    testView: {
-        height: 130,
-        width: width,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'white',
-    },
-    testView2: {
-        flexDirection:'row',
-        justifyContent: 'center',
-        height: 200,
-        width: width,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'white',
-    },
-    textUnderImage: {
-        fontSize: 10,
-    },
-    textButton: {
-        fontSize: 15,
-        color: 'white',
-    },
-    formalCancelButton: {
-        height: 50,
-        width: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'red',
-        margin: 15,
-        borderRadius: 10,
-    },
-    formalAcceptButton: {
-        height: 50,
-        width: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'blue',
-        margin: 15,
-        borderRadius: 10,
-    },
-    buttonView: {
-        flex: 2,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-
-    },
-    title: {
-        fontSize: 19,
-        fontWeight: 'bold',
-    },
-    titleView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    detailInfoView: {
-        flex: 3,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    markerView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: 5,
-    },
-    RBSheetView: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
-
-    },
-    RBSheetViewName: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-
-    },
-    bottomButtonView: {
-        height: 150,
-        width: width,
-
-        justifyContent: 'flex-end',
-        alignItems: 'flex-end',
-    },
-    bottomButtonView2: {
-        height: 150,
-        width: width,
-        backgroundColor:'white',
-
-
-
-    },
-    TouchableOpacityStyle: {
-        width: 60,
-        height: 60,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 30,
-        backgroundColor: 'white',
-        marginBottom: 15,
-        marginTop: 10,
-        marginRight: 20,
-    },
-    FloatingButtonStyle: {
-        resizeMode: 'contain',
-        width: 30,
-        height: 30,
-        //backgroundColor:'black'
-    },
-    FloatingButtonStyle2: {
-        resizeMode: 'contain',
-        width: 20,
-        height: 20,
-        //backgroundColor:'black'
-    },
-    FloatingButtonStyle3: {
-        resizeMode: 'contain',
-        width: 25,
-        height: 25,
-        //backgroundColor:'black'
-    },
-    FloatingButtonStyle4: {
-        resizeMode: 'contain',
-        width: 25,
-        height: 25,
-        marginLeft:15
-        //backgroundColor:'black'
-    },
-    bottomView: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-    },
-    addMarkerButton: {
-        height: 50,
-        width: 50,
-        borderRadius: 30,
-
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: 24,
-    },
-    markerImage: {
-        height: 35,
-        width: 35,
-    },
-    markerImage2: {
-        height: 45,
-        width: 45,
-    },
-    input: {
-        height: 50,
-        width: 300,
-
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 25,
-        margin: 15,
-        paddingLeft: 20,
-    },
-    input1: {
-        height: 40,
-        width: 250,
-
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 10,
-        marginLeft: 15,
-        marginRight: 15,
-        paddingLeft: 20,
-    },
-    input2: {
-        height: 100,
-        width: 300,
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 25,
-        margin: 15,
-        paddingLeft: 20,
-    },
-    input3: {
-        height: 40,
-        width: 250,
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 10,
-        marginLeft: 15,
-        marginRight: 15,
-        paddingLeft: 20,
-    },
-    container: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-    },
-    map: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-    bubble: {
-        flex: 1,
-        backgroundColor: 'rgba(255,255,255,0.7)',
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        borderRadius: 20,
-    },
-    latlng: {
-        width: 200,
-        alignItems: 'stretch',
-    },
-    button: {
-        width: 80,
-        paddingHorizontal: 12,
-        alignItems: 'center',
-        marginHorizontal: 10,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        marginVertical: 20,
-        backgroundColor: 'transparent',
-    },
-});
+// const styles = StyleSheet.create({
+//
+// });

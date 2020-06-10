@@ -15,7 +15,7 @@ import {
 import Toast from 'react-native-simple-toast';
 import MapView, {MAP_TYPES, Marker, Polyline, PROVIDER_DEFAULT, UrlTile} from 'react-native-maps';
 import SearchableDropdown from 'react-native-searchable-dropdown';
-
+import styles from '../res/styles';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import AsyncStorage from '@react-native-community/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -71,11 +71,9 @@ export default class MapScreen extends React.Component {
             time: '',
             isShowScheduleView: false,
             schedule: [
-                {
-                    id: 'đâs',
-                    name: 'Cổng vào',
-                },
+
             ],
+            currentIndex: '',
         };
     }
 
@@ -351,6 +349,11 @@ export default class MapScreen extends React.Component {
                                     await this.setState({
                                         isShowScheduleView: true,
                                     });
+                                    for(let i=0;i<this.state.schedule.length-1;i++){
+                                        if(this.state.schedule[i].id!==''&& this.state.schedule[i+1].id!==''){
+                                            await this.findSchedule(this.state.schedule[i].id,this.state.schedule[i+1].id)
+                                        }
+                                    }
 
                                 }}>
 
@@ -373,7 +376,6 @@ export default class MapScreen extends React.Component {
                 );
             }
         } else if (this.state.length !== 0) {
-
             let distance;
             let distanceString;
             if (this.state.length > 1000) {
@@ -574,6 +576,11 @@ export default class MapScreen extends React.Component {
                 markers: response.markers,
                 polylines: response.polylines,
             });
+            if(!this.state.isShowScheduleView){
+                await this.setState({
+                    schedule:response.schedule
+                })
+            }
 
         });
     };
@@ -740,6 +747,7 @@ export default class MapScreen extends React.Component {
         await this.getDataOfTask();
         console.log('Hello');
         let graph = await this.initData(0);
+        // console.log(graph)
         // await console.log(graph);
         // let graph = {
         //     start: { A: 5, B: 2 },
@@ -750,7 +758,7 @@ export default class MapScreen extends React.Component {
         //     finish: {},
         // };
         let result = await this.findShortestPath(graph, startingId, finishingId);
-        // console.log(result.distance)
+        console.log(result);
         if (result.distance !== 'Infinity') {
             this.setState({
                 length: result.distance,
@@ -790,6 +798,7 @@ export default class MapScreen extends React.Component {
 
     };
     findSchedule = async (startingId, finishingId) => {
+        console.log(startingId+" "+finishingId)
         let graph = await this.initData(0);
         // await console.log(graph);
         // let graph = {
@@ -804,7 +813,7 @@ export default class MapScreen extends React.Component {
         // console.log(result.distance)
         if (result.distance !== 'Infinity') {
             this.setState({
-                length: result.distance,
+                length: this.state.length+result.distance,
             });
             // await console.log('result:');
             // await console.log(result);
@@ -876,9 +885,10 @@ export default class MapScreen extends React.Component {
                                        source={require('../res/images/startingPoint.png')}/>
                                 <TextInput
                                     style={styles.input1}
-                                    onTouchStart={() => this.setState({
-                                        isDisplaySearchDropdown: true,
-                                        placeholderSearch: 'Chọn điểm khởi hành',
+                                    onTouchStart={() =>
+                                        this.setState({
+                                            isDisplaySearchDropdown: true,
+                                            placeholderSearch: 'Chọn điểm khởi hành',
                                     })}
                                     placeholder={'Chọn địa điểm bắt đầu'}
                                     value={this.state.startingPoint}
@@ -1044,101 +1054,222 @@ export default class MapScreen extends React.Component {
             }
         }
     };
+    updateScheduleApi= async ()=>{
+        let data = {
+            schedule:this.state.schedule
+        };
+        let updateRoadUrl =
+            selfUrl + '/projects/' + this.state.projectId + '/tasks/' + this.state.taskId + '/schedule';
+        let response = await fetch(updateRoadUrl, {
+            method: 'PATCH',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                Authorization: this.state.auth,
+            },
+            body: JSON.stringify(data),
+        });
+        return response;
+    }
+    updateSchedule=async ()=>{
+        await this.updateScheduleApi().then(async (res)=>{
+            let response=await res.json()
+            console.log(response)
+        })
+    }
     showScheduleView = () => {
+        let items = [];
+        this.state.markers.map((marker) => {
+            items.unshift({
+                id: marker.markerId,
+                name: marker.title,
+            });
+        });
         if (this.state.isShowScheduleView) {
-            return (
-                <View style={styles.scheduleView}>
-                    <View style={{height: 200, width: 50}}>
+            if (!this.state.isDisplaySearchDropdown) {
+                return (
+                    <View style={styles.scheduleView}>
+                        <View style={{height: 200, width: 50}}>
+                            <TouchableOpacity style={{
+                                height: 40, width: 40, justifyContent: 'center', alignItems: 'center'
+                                , marginLeft: 5, marginTop: 10, marginBottom: 10,
+                            }}
+                                              onPress={async () => {
+                                                  await this.setState({
+                                                      isShowScheduleView: false,
+                                                  });
+                                                  await this.getDataOfTask();
+                                              }}>
+                                <Image style={{height: 20, width: 20}} source={require('../res/images/back.png')}/>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{
+                                height: 40, width: 40, justifyContent: 'center', alignItems: 'center'
+                                , marginLeft: 5, marginTop: 10, marginBottom: 10,
+                            }}
+                                              onPress={async () => {
+                                                  await this.updateSchedule()
+                                                  await this.setState({
+                                                      isShowScheduleView: false,
+                                                  });
+                                                  await this.getDataOfTask();
+                                              }}>
+                                <Image style={{height: 30, width: 30}} source={require('../res/images/save.png')}/>
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.scrollScheduleView}>
+                            <View style={{flex: 1, flexDirection: 'row'}}>
+                                <FlatList
+                                    data={this.state.schedule}
+                                    renderItem={({item, index}) => (
+                                        <View style={styles.itemView}>
+                                            <TextInput
+                                                style={styles.scheduleInput}
+                                                onTouchStart={async () => {
+                                                    await this.setState({
+                                                        isDisplaySearchDropdown: true,
+                                                        currentIndex: index,
+                                                    });
+                                                    // await console.log(this.state.isDisplaySearchDropdown)
+                                                }
+                                                }
+                                                placeholder={'Chọn địa điểm'}
+                                                value={item.name}
+
+                                            />
+                                            <TouchableOpacity style={{
+                                                height: 40, width: 40, justifyContent: 'center', alignItems: 'center',
+
+                                            }} onPress={async () => {
+                                                let newSchedule = this.state.schedule.slice(0, index).concat(this.state.schedule.slice(index + 1));
+                                                await this.setState({
+                                                    schedule: newSchedule,
+                                                    length:0
+                                                })
+                                                await this.getDataOfTask()
+                                                for(let i=0;i<this.state.schedule.length-1;i++){
+                                                    if(this.state.schedule[i].id!==''&& this.state.schedule[i+1].id!==''){
+                                                        await this.findSchedule(this.state.schedule[i].id,this.state.schedule[i+1].id)
+                                                    }
+                                                }
+                                                await console.log(this.state.schedule)
+                                            }}>
+                                                <Image style={{height: 20, width: 20}}
+                                                       source={require('../res/images/x-symbol.png')}/>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )
+                                    }
+                                    keyExtractor={item => item.id}
+                                />
+                            </View>
+                            {/*<View style={{height: 40, width: width - 50, flexDirection: 'row', alignItems: 'center'}}>*/}
+                            <TouchableOpacity style={{
+                                height: 40,
+                                width: 150,
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginLeft: 20,
+                            }}
+                                              onPress={async () => {
+
+                                                  await this.setState({
+                                                      schedule: [
+                                                          ...this.state.schedule,
+                                                          {
+                                                              id: '',
+                                                              name: '',
+                                                          },
+                                                      ],
+                                                  });
+
+                                              }}>
+                                <Image style={{height: 30, width: 30}} source={require('../res/images/add_icon.png')}/>
+                                <Text style={{fontSize: 15, marginLeft: 5}}>Thêm địa điểm</Text>
+                            </TouchableOpacity>
+
+                            {/*</View>*/}
+                        </ScrollView>
+                    </View>
+                );
+            } else {
+                return (
+                    <View style={styles.testView2}>
                         <TouchableOpacity style={{
                             height: 40, width: 40, justifyContent: 'center', alignItems: 'center'
                             , marginLeft: 5, marginTop: 10, marginBottom: 10,
                         }}
                                           onPress={async () => {
                                               await this.setState({
-                                                  isShowScheduleView: false,
+                                                  isDisplaySearchDropdown: false,
                                               });
-                                              await this.getDataOfTask();
+
                                           }}>
                             <Image style={{height: 20, width: 20}} source={require('../res/images/back.png')}/>
                         </TouchableOpacity>
-                    </View>
-                    <ScrollView style={styles.scrollScheduleView}>
-                        <View style={{flex: 1, flexDirection: 'row'}}>
-                            <FlatList
-                                data={this.state.schedule}
-                                renderItem={({item, index}) => (
-                                    <View style={styles.itemView}>
-                                        <TextInput
-                                            style={styles.scheduleInput}
-                                            onTouchStart={() => this.setState({
-                                                isDisplaySearchDropdown: true,
-                                                placeholderSearch: 'Chọn địa điểm',
-                                            })}
-                                            placeholder={'Chọn địa điểm'}
-                                            value={item.name}
-                                            // onChangeText={(name) => {
-                                            //     console.log(item)
-                                            //     // this.setState({
-                                            //     //     finishingPoint: finishingPoint,
-                                            //     // });
-                                            // }
-                                            // }
-                                        />
-                                        <TouchableOpacity style={{
-                                            height: 40, width: 40, justifyContent: 'center', alignItems: 'center',
+                        <SearchableDropdown
+                            onItemSelect={async (item) => {
+                                let scheduleTmp = this.state.schedule;
+                                scheduleTmp[this.state.currentIndex].id = item.id;
+                                scheduleTmp[this.state.currentIndex].name = item.name;
+                               await this.setState({
+                                    schedule: scheduleTmp,
+                                    isDisplaySearchDropdown: false,
+                                    length:0
+                                });
 
-                                        }} onPress={async () => {
-                                                let newSchedule=this.state.schedule.slice(0, index).concat(this.state.schedule.slice(index + 1))
-                                                await this.setState({
-                                                    schedule:newSchedule
-                                                })
-                                                await console.log(this.state.schedule)
-                                        }}>
-                                            <Image style={{height: 20, width: 20}}
-                                                   source={require('../res/images/x-symbol.png')}/>
-                                        </TouchableOpacity>
-                                    </View>
-                                )
+                               for(let i=0;i<this.state.schedule.length-1;i++){
+                                   if(this.state.schedule[i].id!==''&& this.state.schedule[i+1].id!==''){
+
+                                       await this.findSchedule(this.state.schedule[i].id,this.state.schedule[i+1].id)
+                                   }
+                               }
+                            }}
+                            containerStyle={{padding: 5}}
+                            // onRemoveItem={(item, index) => {
+                            //   const items = this.state.selectedItems.filter((sitem) => sitem.id !== item.id);
+                            //   this.setState({ selectedItems: items });
+                            // }}
+                            itemStyle={{
+                                height: 40,
+                                width: width - 70,
+                                padding: 10,
+                                marginTop: 2,
+                                backgroundColor: '#ddd',
+                                borderColor: '#bbb',
+                                borderWidth: 1,
+                                borderRadius: 5,
+                            }}
+                            itemTextStyle={{color: '#222'}}
+                            itemsContainerStyle={{maxHeight: 140}}
+                            items={items}
+                            // defaultIndex={2}
+                            resetValue={false}
+                            textInputProps={
+                                {
+                                    placeholder: this.state.placeholderSearch,
+                                    underlineColorAndroid: 'transparent',
+                                    style: {
+                                        height: 40,
+                                        width: width - 70,
+                                        padding: 12,
+                                        margin: 5,
+                                        borderWidth: 1,
+                                        borderColor: '#ccc',
+                                        borderRadius: 5,
+                                    },
+                                    // onTextChange: te
                                 }
-                                keyExtractor={item => item.id}
-                            />
-                        </View>
-                        {/*<View style={{height: 40, width: width - 50, flexDirection: 'row', alignItems: 'center'}}>*/}
-                        <TouchableOpacity style={{
-                            height: 40,
-                            width: 150,
-                            flexDirection: 'row',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginLeft: 20,
-                        }}
-                                          onPress={async () => {
-                                              // console.log(this.state.schedule)
-                                              // let newSchedule=await this.state.schedule.unshift({
-                                              //     id:'',
-                                              //     name:''
-                                              // })
-                                              // console.log("HI")
-                                              // console.log(newSchedule)
-                                              await this.setState({
-                                                  schedule: [
-                                                      ...this.state.schedule,
-                                                      {
-                                                          id: '',
-                                                          name: '',
-                                                      },
-                                                  ],
-                                              });
-
-                                          }}>
-                            <Image style={{height: 30, width: 30}} source={require('../res/images/add_icon.png')}/>
-                            <Text style={{fontSize: 15, marginLeft: 5}}>Thêm địa điểm</Text>
-                        </TouchableOpacity>
-
-                        {/*</View>*/}
-                    </ScrollView>
-                </View>
-            );
+                            }
+                            listProps={
+                                {
+                                    nestedScrollEnabled: true,
+                                }
+                            }
+                        />
+                    </View>
+                );
+            }
         }
 
     };
@@ -1710,398 +1841,11 @@ export default class MapScreen extends React.Component {
 
                     </ScrollView>
                 </RBSheet>
-                <RBSheet
-                    ref={ref => {
-                        this.findRoadSheet = ref;
-                    }}
-                    height={350}
-                    closeOnDragDown={true}
-                    openDuration={250}
-                    customStyles={{
-                        container: {
-                            justifyContent: 'center',
-                            alignItems: 'center',
 
-                        },
-                    }}
-                >
-                    <ScrollView style={{flex: 1}}>
-                        <View style={styles.titleView}>
-                            <Text style={styles.title}>Tìm đường đi</Text>
-                        </View>
-                        <View style={styles.detailInfoView}>
-                            <View
-                                style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-                                <Image style={{height: 15, width: 15}}
-                                       source={require('../res/images/startingPoint.png')}/>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder={'Chọn địa điểm bắt đầu'}
-                                    value={this.state.currentMarker.title}
-                                    onChangeText={(title) => {
-                                        this.setState({
-                                            currentMarker: {
-                                                coordinate: this.state.currentMarker.coordinate,
-                                                title: title,
-                                                description: this.state.currentMarker.description,
-                                                markerId: this.state.currentMarker.markerId,
-                                                markerType: this.state.currentMarker.markerType,
-                                            },
-                                        });
-                                        // console.log(this.state.currentMarker);
-                                    }
-
-                                    }
-                                />
-                            </View>
-                            <View
-                                style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-                                <Image style={{height: 20, width: 20}}
-                                       source={require('../res/images/normalMarker_96x96.png')}/>
-                                <TextInput
-                                    style={styles.input3}
-                                    placeholder={'Chọn điểm đến'}
-                                    value={this.state.currentMarker.description}
-                                    onChangeText={(description) => {
-                                        this.setState({
-                                            currentMarker: {
-                                                coordinate: this.state.currentMarker.coordinate,
-                                                title: this.state.currentMarker.title,
-                                                description: description,
-                                                markerId: this.state.currentMarker.markerId,
-                                                markerType: this.state.currentMarker.markerType,
-                                            },
-                                        });
-                                        // console.log(this.state.currentMarker);
-                                    }
-                                    }
-                                />
-                            </View>
-                        </View>
-                        <View style={styles.buttonView}>
-                            <TouchableOpacity
-                                style={styles.formalAcceptButton}
-                                onPress={() => {
-                                    this.updateMarkerData();
-                                }}
-
-                            >
-                                <Text style={styles.textButton}>Tìm đường</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.formalCancelButton}
-                                onPress={async () => {
-                                    await this.deleteMarker();
-                                    await this.RBSheet2.close();
-                                }}
-                            >
-                                <Text style={styles.textButton}>Xóa đánh dấu</Text>
-                            </TouchableOpacity>
-
-                        </View>
-
-                    </ScrollView>
-                </RBSheet>
             </View>
         );
     }
 }
 
 
-const styles = StyleSheet.create({
-    itemView: {
-        height: 60,
-        width: width,
-        flexDirection: 'row',
-        marginLeft: 10,
-        alignItems: 'center',
-    },
-    rowBottomButtonView: {
-        height: 80,
-        width: width,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        // backgroundColor:'red'
-    },
-    dateTimeView: {
-        height: 78,
-        width: width,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    testView: {
-        height: 130,
-        width: width,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'white',
-    },
-    scheduleView: {
-        height: 200,
-        width: width,
-        flexDirection: 'row',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'white',
-    },
-    scrollScheduleView: {
-        height: 200,
-        width: width - 50,
 
-    },
-    testView2: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        height: 200,
-        width: width,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'white',
-    },
-    textUnderImage: {
-        fontSize: 10,
-    },
-    textButton: {
-        fontSize: 15,
-        color: 'white',
-    },
-    formalCancelButton: {
-        height: 50,
-        width: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'red',
-        margin: 15,
-        borderRadius: 10,
-    },
-    formalAcceptButton: {
-        height: 50,
-        width: 100,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'blue',
-        margin: 15,
-        borderRadius: 10,
-    },
-    buttonView: {
-        flex: 2,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-
-    },
-    title: {
-        fontSize: 19,
-        fontWeight: 'bold',
-    },
-    titleView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    detailInfoView: {
-        flex: 4,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    markerView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: 5,
-    },
-    RBSheetView: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
-
-    },
-    RBSheetViewName: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-
-    },
-    bottomButtonView: {
-        height: 150,
-        width: width,
-        justifyContent: 'flex-end',
-        alignItems: 'flex-end',
-    },
-    bottomButtonView2: {
-        height: 150,
-        width: width,
-        backgroundColor: 'white',
-
-
-    },
-    TouchableOpacityStyle: {
-        width: 60,
-        height: 60,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 30,
-        backgroundColor: 'white',
-        marginBottom: 15,
-        marginTop: 10,
-        marginRight: 20,
-    },
-    FloatingButtonStyle: {
-        resizeMode: 'contain',
-        width: 30,
-        height: 30,
-        //backgroundColor:'black'
-    },
-    FloatingButtonStyle2: {
-        resizeMode: 'contain',
-        width: 20,
-        height: 20,
-        //backgroundColor:'black'
-    },
-    FloatingButtonStyle3: {
-        resizeMode: 'contain',
-        width: 25,
-        height: 25,
-        //backgroundColor:'black'
-    },
-    FloatingButtonStyle4: {
-        resizeMode: 'contain',
-        width: 25,
-        height: 25,
-        marginLeft: 15,
-        //backgroundColor:'black'
-    },
-    bottomView: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-    },
-    addMarkerButton: {
-        height: 50,
-        width: 50,
-        borderRadius: 30,
-
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: 24,
-    },
-    markerImage: {
-        height: 35,
-        width: 35,
-    },
-    markerImage2: {
-        height: 45,
-        width: 45,
-    },
-    input: {
-        height: 50,
-        width: 250,
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 25,
-        margin: 15,
-        paddingLeft: 20,
-    },
-    input1: {
-        height: 40,
-        width: 250,
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 10,
-        marginLeft: 15,
-        marginRight: 15,
-        paddingLeft: 20,
-    },
-    input2: {
-        height: 50,
-        width: 250,
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 25,
-        margin: 15,
-        paddingLeft: 20,
-    },
-    input3: {
-        height: 40,
-        width: 250,
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 10,
-        marginLeft: 15,
-        marginRight: 15,
-        paddingLeft: 20,
-    },
-    scheduleInput: {
-        height: 40,
-        width: 250,
-        borderWidth: 1,
-        borderColor: '#afb4b3',
-        color: 'black',
-        fontSize: 15,
-        borderRadius: 10,
-        marginBottom: 10,
-        marginLeft: 15,
-        marginRight: 15,
-        marginTop: 10,
-        paddingLeft: 20,
-    },
-    container: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-    },
-    map: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-    },
-    bubble: {
-        flex: 1,
-        backgroundColor: 'rgba(255,255,255,0.7)',
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        borderRadius: 20,
-    },
-    latlng: {
-        width: 200,
-        alignItems: 'stretch',
-    },
-    button: {
-        width: 80,
-        paddingHorizontal: 12,
-        alignItems: 'center',
-        marginHorizontal: 10,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        marginVertical: 20,
-        backgroundColor: 'transparent',
-    },
-});
