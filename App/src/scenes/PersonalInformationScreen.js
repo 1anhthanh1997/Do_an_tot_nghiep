@@ -30,7 +30,7 @@ export default class PersonalInformationScreen extends Component {
     auth: '',
   };
   getInforAPI = async () => {
-    let response = await fetch('http://192.168.55.108:3000/users/me', {
+    let response = await fetch('http://open-drone-map.herokuapp.com/users/me', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export default class PersonalInformationScreen extends Component {
       email: this.state.email,
       phoneNumber: this.state.phoneNumber,
     };
-    let response = await fetch('http://192.168.55.108:3000/users/me', {
+    let response = await fetch('http://open-drone-map.herokuapp.com/users/me', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

@@ -2,6 +2,142 @@ import {StyleSheet,Dimensions} from 'react-native';
 const {width, height} = Dimensions.get('window');
 
 const styles=({
+
+
+    firstView: {
+        flex: 1,
+        justifyContent: 'center',
+        paddingLeft: 20,
+    },
+    secondView: {
+        flex: 8,
+        alignItems: 'center',
+    },
+    inputRegister: {
+        height: 43,
+        width: 300,
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        // borderWidth:2,
+        // borderColor:'#afb4b3',
+        color: 'gray',
+        fontSize: 15,
+        borderRadius: 25,
+        margin: 10,
+        paddingLeft: 20,
+    },
+    touchableRegister: {
+        height: 45,
+        width: 300,
+        marginTop: 30,
+    },
+    touchableLogInViewRegister: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#0b86da',
+        borderRadius: 25,
+    },
+
+    registerText: {
+        fontSize: 25,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    genderView: {
+        flex: 1,
+    },
+    radioButtonView: {
+        flexDirection: 'row',
+        padding: 10,
+    },
+    genderText: {
+        fontSize: 15,
+        color: 'gray',
+        paddingRight: 67,
+    },
+    datePickerView: {
+        flexDirection: 'row',
+        padding: 10,
+        alignItems: 'center',
+    },
+    datePickerText: {
+        fontSize: 15,
+        color: 'gray',
+        paddingRight: 20,
+    },
+    screenView: {
+        flex: 1,
+    },
+    imageBackground: {
+        height: Dimensions.get('window').height,
+        width: Dimensions.get('window').width,
+    },
+    additionView: {
+        flex: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    logo: {
+        height: 100,
+        width: 100,
+    },
+    signInText: {
+        fontSize: 25,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    partitionFirstView: {
+        flex: 1,
+        justifyContent: 'center',
+        marginLeft: 20,
+    },
+    touchable: {
+        height: 50,
+        width: 300,
+        marginTop: 15,
+    },
+    touchableLogInView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#da4842',
+        borderRadius: 25,
+    },
+    touchableLogInText: {
+        fontSize: 18,
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    inputLogin: {
+        height: 50,
+        width: 300,
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        // borderWidth:2,
+        // borderColor:'#afb4b3',
+        color: 'gray',
+        fontSize: 15,
+        borderRadius: 25,
+        margin: 15,
+        paddingLeft: 20,
+    },
+    partitionSecondView: {
+        flex: 3,
+        alignItems: 'center',
+    },
+    partitionThirdView: {
+        flex: 3,
+        flexDirection: 'row',
+    },
+    secondOption: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    secondOptionText: {
+        fontSize: 15,
+        color: 'gray',
+        marginTop: 10,
+        fontWeight: 'bold',
+    },
     itemView: {
         height: 60,
         width: width,

@@ -33,7 +33,7 @@ import DocumentPicker from 'react-native-document-picker';
 import SearchInput, {createFilter} from 'react-native-search-filter';
 
 const url = 'http://192.168.55.108:8000';
-const selfUrl = 'http://192.168.55.108:3000';
+const selfUrl = 'http://open-drone-map.herokuapp.com';
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 export default class taskScreen extends Component {

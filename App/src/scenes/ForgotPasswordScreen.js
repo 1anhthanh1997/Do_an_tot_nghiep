@@ -8,7 +8,7 @@ import {
     ImageBackground,
     Dimensions,
 } from 'react-native';
-let selfUrl = 'http://192.168.55.108:3000';
+let selfUrl = 'http://open-drone-map.herokuapp.com';
 
 export default class ForgotPasswordScreen extends Component {
     state = {

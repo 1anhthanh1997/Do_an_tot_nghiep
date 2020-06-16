@@ -25,7 +25,7 @@ const {width, height} = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.002; // 0.0922
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
-const selfUrl = 'http://192.168.55.108:3000';
+const selfUrl = 'http://open-drone-map.herokuapp.com';
 const speed=4000
 const mountOfcalo=546
 

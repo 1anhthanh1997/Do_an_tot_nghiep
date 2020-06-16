@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import {Icon} from 'native-base';
+import styles from '../res/styles'
 import AsyncStorage from '@react-native-community/async-storage';
 
 
@@ -105,7 +106,7 @@ export default class LoginScreen extends Component {
       username: this.state.username,
       password: this.state.password,
     };
-    let response = await fetch('http://192.168.55.108:3000/users/login', {
+    let response = await fetch('http://open-drone-map.herokuapp.com/users/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -134,7 +135,7 @@ export default class LoginScreen extends Component {
           </View>
           <View style={styles.partitionSecondView}>
             <TextInput
-              style={styles.input}
+              style={styles.inputLogin}
               placeholder={'Tên đăng nhập'}
               onChangeText={username =>
                 this.setState({
@@ -143,7 +144,7 @@ export default class LoginScreen extends Component {
               }
             />
             <TextInput
-              style={styles.input}
+              style={styles.inputLogin}
               secureTextEntry={true}
               placeholder={'Mật khẩu'}
               onChangeText={password =>
@@ -184,78 +185,4 @@ export default class LoginScreen extends Component {
   }
 }
 
-let styles = StyleSheet.create({
-  screenView: {
-    flex: 1,
-  },
-  imageBackground: {
-    height: Dimensions.get('window').height,
-    width: Dimensions.get('window').width,
-  },
-  additionView: {
-    flex: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: {
-    height: 100,
-    width: 100,
-  },
-  signInText: {
-    fontSize: 25,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  partitionFirstView: {
-    flex: 1,
-    justifyContent: 'center',
-    marginLeft: 20,
-  },
-  touchable: {
-    height: 50,
-    width: 300,
-    marginTop: 15,
-  },
-  touchableLogInView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#da4842',
-    borderRadius: 25,
-  },
-  touchableLogInText: {
-    fontSize: 18,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  input: {
-    height: 50,
-    width: 300,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    // borderWidth:2,
-    // borderColor:'#afb4b3',
-    color: 'gray',
-    fontSize: 15,
-    borderRadius: 25,
-    margin: 15,
-    paddingLeft: 20,
-  },
-  partitionSecondView: {
-    flex: 3,
-    alignItems: 'center',
-  },
-  partitionThirdView: {
-    flex: 3,
-    flexDirection: 'row',
-  },
-  secondOption: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  secondOptionText: {
-    fontSize: 15,
-    color: 'gray',
-    marginTop: 10,
-    fontWeight: 'bold',
-  },
-});
+

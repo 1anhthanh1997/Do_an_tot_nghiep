@@ -32,7 +32,7 @@ import DeleteIcon from 'react-native-vector-icons/AntDesign';
 import SearchInput, {createFilter} from 'react-native-search-filter';
 
 const url = 'http://192.168.55.108:8000';
-const selfUrl = 'http://192.168.55.108:3000';
+const selfUrl = 'http://open-drone-map.herokuapp.com';
 export default class ProjectScreen extends Component {
     state = {
         filterData: [],

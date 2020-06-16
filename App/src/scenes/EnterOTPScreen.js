@@ -9,7 +9,7 @@ import {
   Dimensions, Alert,
 } from 'react-native';
 import Toast from 'react-native-simple-toast';
-let selfUrl = 'http://192.168.55.108:3000';
+let selfUrl = 'http://open-drone-map.herokuapp.com';
 export default class EnterOTPScreen extends Component {
     state = {
         email:'',

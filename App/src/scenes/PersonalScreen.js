@@ -5,7 +5,7 @@ import ChangePassIcon from 'react-native-vector-icons/Fontisto';
 import LogoutIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-community/async-storage';
 
-let selfUrl = 'http://192.168.55.108:3000';
+let selfUrl = 'http://open-drone-map.herokuapp.com';
 export default class PersonalScreen extends Component {
     state = {
         auth: '',

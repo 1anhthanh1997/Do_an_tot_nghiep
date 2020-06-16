@@ -25,15 +25,12 @@ const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.002; // 0.0922
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 const url = 'http://192.168.55.108:8000';
-const selfUrl = 'http://192.168.55.108:3000';
+const selfUrl = 'http://open-drone-map.herokuapp.com';
 const speed = 4000;
 const mountOfcalo = 546;
 
 export default class MapScreen extends React.Component {
-
-
     state = {
-
             region: {
                 latitude: 0,
                 longitude: 0,
@@ -1362,7 +1359,9 @@ export default class MapScreen extends React.Component {
             console.log(this.state.region);
         });
     };
-
+    onRegionChange(region) {
+        this.setState({ region });
+    }
     async componentDidMount() {
         const {link} = await this.props.route.params;
         const {taskId} = await this.props.route.params;
@@ -1393,7 +1392,7 @@ export default class MapScreen extends React.Component {
     }
 
     render() {
-        // const {region} = this.state;
+
         return (
             <View style={styles.container}>
 
@@ -1401,7 +1400,7 @@ export default class MapScreen extends React.Component {
                     mapType={Platform.OS === 'android' ? 'none' : 'standard'}
                     style={styles.map}
                     region={this.state.region}
-
+                    onRegionChange={()=>this.onRegionChange()}
                     maxZoomLevel={25}
                     // minZoomLevel={18}
                     onPress={(event) => {

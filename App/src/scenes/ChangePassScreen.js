@@ -34,7 +34,7 @@ export default class ChangePassScreen extends Component {
       oldPassword: this.state.username,
       newPassword: this.state.password,
     };
-    let response = await fetch('http://192.168.55.108:3000/users/changePass', {
+    let response = await fetch('http://open-drone-map.herokuapp.com/users/changePass', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
