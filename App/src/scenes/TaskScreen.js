@@ -40,6 +40,7 @@ export default class taskScreen extends Component {
     state = {
         filterData: [],
         data: [],
+        dataODM:[],
         data2: ['value1', 'value2', 'value3'],
         tasks: [],
         addVisible: false, // taskNameTmp: '',        // taskDescriptionTmp: '',        numberOfImage: 0,        projectId: '',        taskName: '',
@@ -84,6 +85,32 @@ export default class taskScreen extends Component {
             // await console.log(this.state.data.length)
         });
     };
+    getListTaskODMApi = async token => {
+        let auth = token;
+        let getListTaskUrl =
+            url + '/api/projects/' + this.state.projectId + '/tasks/';
+        console.log(getListTaskUrl);
+        let response = await fetch(getListTaskUrl, {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                Authorization: auth,
+            },
+        });
+        return response;
+    };
+    getListTaskODM = async () => {
+        await this.getListTaskODMApi(this.state.authODM).then(async res => {
+            let responseJson = await res.json();
+            console.log(responseJson);
+            await this.setState({
+                dataODM: responseJson,
+                // folderUri: responseJson.link,
+            });
+            await console.log(this.state.dataODM)
+        });
+    };
     createTaskODMAPI = async data => {
         console.log(data);
         console.log(this.state.authODM);
@@ -104,6 +131,7 @@ export default class taskScreen extends Component {
         return response;
     };
     createTaskAPI = async (data) => {
+        console.log(this.state.auth)
         let createUrl = selfUrl + '/projects/' + this.state.projectId + '/tasks';
         console.log(createUrl);
         let response = await fetch(createUrl, {
@@ -146,7 +174,7 @@ export default class taskScreen extends Component {
                     let response = res.json();
                     console.log(response);
                 });
-                await this.getListTask(this.state.authODM);
+                await this.getListTask(this.state.auth);
                 await this.setState({
                     isDisplaySpinner: false,
                 });
@@ -188,7 +216,7 @@ export default class taskScreen extends Component {
                         {
                             text: 'OK',
                             onPress: async () => {
-                                await this.getListTask(this.state.authODM);
+                                await this.getListTask(this.state.auth);
                                 await this.props.navigation.navigate('Task');
                             },
                         },
@@ -200,7 +228,7 @@ export default class taskScreen extends Component {
                 console.log(e);
             });
     };
-    deleteTaskAPI = async id => {
+    deleteTaskODMAPI = async id => {
         let deleteTaskUrl =
             url +
             '/api/projects/' +
@@ -219,48 +247,84 @@ export default class taskScreen extends Component {
         });
         return response;
     };
-    deleteTask = async id => {
-        let deleteRes = await this.deleteTaskAPI(id);
-        let res = await this.getListTask(this.state.authODM);
-        await console.log(res);
-        await this.setState({
-            isDisplaySpinner: false,
+    deleteTaskAPI = async id => {
+        let deleteTaskUrl =
+            selfUrl +
+            '/projects/' +
+            this.state.projectId +
+            '/tasks/' +
+            id
+
+        console.log(deleteTaskUrl);
+        let response = await fetch(deleteTaskUrl, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+                Authorization: this.state.auth,
+            },
         });
+        return response;
+    };
+    deleteTask = async id => {
+        await this.deleteTaskODMAPI(id).then(async ()=>{
+            await this.deleteTaskAPI(id)
+            await this.getListTask(this.state.auth);
+            await this.setState({
+                isDisplaySpinner: false,
+            });
+        });
+
+
     };
 
     download = async id => {
-        let downloadUrl =
-            url +
-            '/api/projects/' +
-            this.state.projectId +
-            '/tasks/' +
-            id +
-            '/download/orthophoto_tiles.zip';
-        let dirs = RNFetchBlob.fs.dirs;
-        let path = `${dirs.DownloadDir}/test.zip`;
-        RNFetchBlob.config({
-            // response data will be saved to this path if it has access right.
-            path: path,
-            addAndroidDownloads: {
-                useDownloadManager: true,
-                notification: true,
-                path: path,
-                description: 'Image',
-            },
+        let checkStatus;
+        this.state.dataODM.map((data)=>{
+
+            if(data.status===40){
+                checkStatus=true
+            }else{
+                checkStatus=false
+            }
         })
-            .fetch('GET', downloadUrl, {
-                Authorization: this.state.authODM,
-                //some headers ..
+        if(checkStatus){
+            let downloadUrl =
+                url +
+                '/api/projects/' +
+                this.state.projectId +
+                '/tasks/' +
+                id +
+                '/download/orthophoto_tiles.zip';
+            let dirs = RNFetchBlob.fs.dirs;
+            let path = `${dirs.DownloadDir}/test.zip`;
+            RNFetchBlob.config({
+                // response data will be saved to this path if it has access right.
+                path: path,
+                addAndroidDownloads: {
+                    useDownloadManager: true,
+                    notification: true,
+                    path: path,
+                    description: 'Image',
+                },
             })
-            .then(async res => {
-                // the path should be dirs.DocumentDir + 'path-to-file.anything'
-                let url = 'file://' + res.path();
-                // await this.changeToPng(url);
-                // await this.setState({
-                //      imageUrl:url
-                //  });
-                console.log(url);
-            });
+                .fetch('GET', downloadUrl, {
+                    Authorization: this.state.authODM,
+                    //some headers ..
+                })
+                .then(async res => {
+                    // the path should be dirs.DocumentDir + 'path-to-file.anything'
+                    let url = 'file://' + res.path();
+                    // await this.changeToPng(url);
+                    // await this.setState({
+                    //      imageUrl:url
+                    //  });
+                    console.log(url);
+                });
+        }else{
+            Toast.show("Vui lòng đợi cho đến khi task xử lý xong",Toast.LONG)
+        }
+
     };
 
     handleChoosePhoto = () => {
@@ -391,6 +455,30 @@ export default class taskScreen extends Component {
         });
     };
 
+    displayStatus= (taskId)=>{
+        let checkStatus
+        this.state.dataODM.map((data)=>{
+
+            if(data.status===40){
+                checkStatus=true
+            }else{
+                checkStatus=false
+            }
+        })
+        console.log("task")
+
+        if(checkStatus){
+            return (
+                <Text style={{color:'#0b86da'}}>Completed</Text>
+            )
+        }else{
+            return (
+                <Text style={{color:'orange'}}>Running</Text>
+            )
+        }
+
+    }
+
     async componentDidMount() {
         try {
             const {projectId} = await this.props.route.params;
@@ -405,6 +493,11 @@ export default class taskScreen extends Component {
                 auth: 'Bearer ' + value2,
             });
             await this.getListTask(this.state.auth);
+            await this.getListTaskODM()
+            setInterval(async ()=>{
+                await this.getListTaskODM()
+            },60000)
+
 
             // console.log(this.state.tasks);
         } catch (e) {
@@ -689,6 +782,7 @@ export default class taskScreen extends Component {
                                         <Text style={{fontWeight: 'bold', fontSize: 17}}>
                                             {item.taskName}
                                         </Text>
+                                        {this.displayStatus(item.taskId)}
                                     </View>
                                     <View
                                         style={{

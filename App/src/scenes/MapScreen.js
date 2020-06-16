@@ -6,7 +6,6 @@ import {
     Image,
     Platform,
     ScrollView,
-    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
@@ -25,20 +24,21 @@ const {width, height} = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE_DELTA = 0.002; // 0.0922
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+const url = 'http://192.168.55.108:8000';
 const selfUrl = 'http://192.168.55.108:3000';
 const speed = 4000;
 const mountOfcalo = 546;
 
 export default class MapScreen extends React.Component {
-    constructor(props, context) {
-        super(props, context);
 
-        this.state = {
+
+    state = {
+
             region: {
-                latitude: (41.30297805032947 + 41.305323408114326) / 2,
-                longitude: (-81.75436772316507 + -81.74998458946746) / 2,
-                latitudeDelta: LATITUDE_DELTA,
-                longitudeDelta: LONGITUDE_DELTA,
+                latitude: 0,
+                longitude: 0,
+                latitudeDelta: 0,
+                longitudeDelta: 0,
             },
             markers: [],
             currentMarker: {
@@ -74,8 +74,8 @@ export default class MapScreen extends React.Component {
 
             ],
             currentIndex: '',
-        };
-    }
+    };
+
 
     get mapType() {
         // MapKit does not support 'none' as a base map
@@ -1327,6 +1327,42 @@ export default class MapScreen extends React.Component {
         }
     };
 
+    getMapCoordinateApi = async () => {
+
+        let updateRoadUrl =
+            url + '/api/projects/' + this.state.projectId + '/tasks/' + this.state.taskId + '/orthophoto/tiles.json';
+        console.log(updateRoadUrl);
+        console.log(this.state.authODM);
+        let response = await fetch(updateRoadUrl, {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                Authorization: this.state.authODM,
+            },
+
+        });
+        return response;
+    };
+
+    getMapCoordinate = async () => {
+        await this.getMapCoordinateApi().then(async (res) => {
+            let response = await res.json();
+            console.log(response);
+            let bound = response.bounds;
+            let region = {
+                latitude: (bound[1] + bound[3]) / 2,
+                longitude: (bound[0] + bound[2]) / 2,
+                latitudeDelta: 0.002,
+                longitudeDelta: 0.002 * ASPECT_RATIO,
+            };
+            await this.setState({
+                region: region,
+            });
+            console.log(this.state.region);
+        });
+    };
+
     async componentDidMount() {
         const {link} = await this.props.route.params;
         const {taskId} = await this.props.route.params;
@@ -1338,13 +1374,16 @@ export default class MapScreen extends React.Component {
             taskId: taskId,
             projectId: projectId,
         });
-
+        const value = await AsyncStorage.getItem('tokenODM');
         const value2 = await AsyncStorage.getItem('token');
 
         await this.setState({
             auth: 'Bearer ' + value2,
+            authODM: 'JWT ' + value,
         });
+        await this.getMapCoordinate();
         await this.getDataOfTask();
+
         // await this.test();
         // await this.state.markers.map(async (marker)=>{
         //     await marker.markerId.showCallout()
@@ -1354,14 +1393,14 @@ export default class MapScreen extends React.Component {
     }
 
     render() {
-        const {region} = this.state;
+        // const {region} = this.state;
         return (
             <View style={styles.container}>
 
                 <MapView
                     mapType={Platform.OS === 'android' ? 'none' : 'standard'}
                     style={styles.map}
-                    initialRegion={region}
+                    region={this.state.region}
 
                     maxZoomLevel={25}
                     // minZoomLevel={18}

@@ -1,8 +1,5 @@
 import * as React from 'react';
-import {Button, View} from 'react-native';
-import {createStackNavigator} from '@react-navigation/stack';
 
-import {NavigationContainer} from '@react-navigation/native';
 
 import ProjectScreen from '../scenes/ProjectScreen';
 import ScheduleScreen from '../scenes/ScheduleScreen';
@@ -13,7 +10,7 @@ import SecondIcon from 'react-native-vector-icons/Ionicons';
 import FourthIcon from 'react-native-vector-icons/MaterialIcons';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import PersonalScreen from '../scenes/PersonalScreen';
-import TaskScreen from '../scenes/TaskScreen';
+
 
 const Tab = createBottomTabNavigator();
 
