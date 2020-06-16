@@ -30,7 +30,7 @@ import {pink50} from 'react-native-paper/src/styles/colors';
 import EditIcon from 'react-native-vector-icons/FontAwesome';
 import DeleteIcon from 'react-native-vector-icons/AntDesign';
 import SearchInput, {createFilter} from 'react-native-search-filter';
-
+import styles from '../res/styles';
 const url = 'http://192.168.55.108:8000';
 const selfUrl = 'http://open-drone-map.herokuapp.com';
 export default class ProjectScreen extends Component {
@@ -167,40 +167,3 @@ export default class ProjectScreen extends Component {
     );
   }
 }
-const styles = StyleSheet.create({
-  dialogContentView: {
-    height: 200,
-    width: 350,
-    alignItems: 'center',
-  },
-  imageBackground: {
-    height: Dimensions.get('window').height,
-    width: Dimensions.get('window').width,
-  },
-  projectNameInput: {
-    height: 50,
-    width: 300,
-    backgroundColor: '#d3d3d3',
-    borderRadius: 10,
-    marginTop: 5,
-    color: 'gray',
-    fontSize: 15,
-    paddingLeft: 15,
-  },
-  descriptionInput: {
-    height: 150,
-    width: 300,
-    backgroundColor: '#d3d3d3',
-    borderRadius: 10,
-    marginTop: 5,
-    color: 'gray',
-    fontSize: 15,
-    paddingLeft: 15,
-  },
-  searchInput: {
-    padding: 10,
-    borderColor: '#CCC',
-    backgroundColor: '#CCC',
-    borderWidth: 1,
-  },
-});

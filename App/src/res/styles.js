@@ -2,8 +2,152 @@ import {StyleSheet,Dimensions} from 'react-native';
 const {width, height} = Dimensions.get('window');
 
 const styles=({
+    childView: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingLeft: 20,
+    },
+    itemText: {
+        fontSize: 16,
+    },
+    emptyView: {
+        flex: 7,
+    },
+    infoIcon: {
+        marginRight: 40,
+    },
+    containerFindRoad: {
+        flex: 1,
+        backgroundColor: '#fff',
+        justifyContent: 'flex-start'
+    },
+    emailItem: {
+        borderBottomWidth: 0.5,
+        borderColor: 'rgba(0,0,0,0.3)',
+        padding: 10
+    },
+    emailSubject: {
+        color: 'rgba(0,0,0,0.5)'
+    },
+    bottomButtonDialog: {
+        flex: 1,
+        backgroundColor: 'red',
+    },
+    spinnerTextStyle: {
+        color: '#FFF',
+    },
+    chooseImageTouchable: {
+        height: 35,
+        width: 120,
+        backgroundColor: 'blue',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 10,
+    },
+    dialogContentViewTask: {
+        height: 100,
+        width: 350,
+    },
 
-
+    taskNameInput: {
+        height: 50,
+        width: 300,
+        backgroundColor: '#d3d3d3',
+        borderRadius: 10,
+        marginTop: 5,
+        color: 'gray',
+        fontSize: 15,
+        paddingLeft: 15,
+    },
+    chooseImageView: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 10,
+    },
+    dialogContentView: {
+        height: 200,
+        width: 350,
+        alignItems: 'center',
+    },
+    projectNameInput: {
+        height: 50,
+        width: 300,
+        backgroundColor: '#d3d3d3',
+        borderRadius: 10,
+        marginTop: 5,
+        color: 'gray',
+        fontSize: 15,
+        paddingLeft: 15,
+    },
+    descriptionInput: {
+        height: 150,
+        width: 300,
+        backgroundColor: '#d3d3d3',
+        borderRadius: 10,
+        marginTop: 5,
+        color: 'gray',
+        fontSize: 15,
+        paddingLeft: 15,
+    },
+    searchInput: {
+        padding: 10,
+        borderColor: '#CCC',
+        backgroundColor: '#CCC',
+        borderWidth: 1,
+    },
+    descriptionTextEnterOTP: {
+        textDecorationLine: 'underline',
+        fontSize: 14,
+        color: 'gray',
+        margin: 20,
+    },
+    touchableEnterOTP: {
+        height: 50,
+        width: 300,
+        marginTop: 30,
+    },
+    touchableView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#da4842',
+        borderRadius: 25,
+    },
+    touchableText: {
+        fontSize: 18,
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    titleText: {
+        fontSize: 25,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    descriptionText: {
+        fontSize: 14,
+        color: 'gray',
+        margin: 10,
+    },
+    inputForgotPassword: {
+        height: 50,
+        width: 300,
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        // borderWidth:2,
+        // borderColor:'#afb4b3',
+        color: 'gray',
+        fontSize: 15,
+        borderRadius: 25,
+        margin: 10,
+        paddingLeft: 20,
+    },
+    touchableForgotPassword: {
+        height: 50,
+        width: 300,
+        marginTop: 30,
+    },
     firstView: {
         flex: 1,
         justifyContent: 'center',

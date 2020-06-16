@@ -16,6 +16,7 @@ import RadioForm, {
 } from 'react-native-simple-radio-button';
 import DatePicker from 'react-native-datepicker';
 import AsyncStorage from '@react-native-community/async-storage';
+import styles from '../res/styles';
 
 export default class ChangePassScreen extends Component {
   state = {
@@ -85,28 +86,28 @@ export default class ChangePassScreen extends Component {
           </View>
           <View style={styles.secondView}>
             <TextInput
-              style={styles.input}
+              style={styles.inputRegister}
               placeholder={'Mật khẩu cũ'}
               onChangeText={value => this.setState({username: value})}
               secureTextEntry={true}
             />
             <TextInput
-              style={styles.input}
+              style={styles.inputRegister}
               placeholder={'Mật khẩu mới'}
               secureTextEntry={true}
               onChangeText={value => this.setState({password: value})}
             />
             <TextInput
-              style={styles.input}
+              style={styles.inputRegister}
               placeholder={'Nhập lại mật khẩu'}
               secureTextEntry={true}
               onChangeText={value => this.setState({retypePassword: value})}
             />
 
             <TouchableOpacity
-              style={styles.touchable}
+              style={styles.touchableRegister}
               onPress={() => this.register()}>
-              <View style={styles.touchableLogInView}>
+              <View style={styles.touchableLogInViewRegister}>
                 <Text style={styles.touchableLogInText}>Đổi mật khẩu</Text>
               </View>
             </TouchableOpacity>
@@ -121,77 +122,4 @@ let radio_props = [
   {label: 'Nam           ', value: 0},
   {label: 'Nữ', value: 1},
 ];
-const styles = StyleSheet.create({
-  screenView: {
-    flex: 1,
-  },
-  imageBackground: {
-    height: Dimensions.get('window').height,
-    width: Dimensions.get('window').width,
-  },
-  firstView: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingLeft: 20,
-  },
-  secondView: {
-    flex: 8,
-    alignItems: 'center',
-  },
-  input: {
-    height: 43,
-    width: 300,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    // borderWidth:2,
-    // borderColor:'#afb4b3',
-    color: 'gray',
-    fontSize: 15,
-    borderRadius: 25,
-    margin: 10,
-    paddingLeft: 20,
-  },
-  touchable: {
-    height: 45,
-    width: 300,
-    marginTop: 30,
-  },
-  touchableLogInView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0b86da',
-    borderRadius: 25,
-  },
-  touchableLogInText: {
-    fontSize: 18,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  registerText: {
-    fontSize: 25,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  genderView: {
-    flex: 1,
-  },
-  radioButtonView: {
-    flexDirection: 'row',
-    padding: 10,
-  },
-  genderText: {
-    fontSize: 15,
-    color: 'gray',
-    paddingRight: 67,
-  },
-  datePickerView: {
-    flexDirection: 'row',
-    padding: 10,
-    alignItems: 'center',
-  },
-  datePickerText: {
-    fontSize: 15,
-    color: 'gray',
-    paddingRight: 20,
-  },
-});
+

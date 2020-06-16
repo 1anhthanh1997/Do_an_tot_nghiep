@@ -9,6 +9,7 @@ import {
   Dimensions, Alert,
 } from 'react-native';
 import Toast from 'react-native-simple-toast';
+import styles from '../res/styles';
 let selfUrl = 'http://open-drone-map.herokuapp.com';
 export default class EnterOTPScreen extends Component {
     state = {
@@ -121,7 +122,7 @@ export default class EnterOTPScreen extends Component {
                         <Text style={styles.titleText}>Nhập mã OTP</Text>
                     </View>
                     <View style={styles.secondView}>
-                        <TextInput style={styles.input}
+                        <TextInput style={styles.inputForgotPassword}
                                    value={this.state.OTP}
                                    onChangeText={(value) => {
                                        this.setState({
@@ -129,12 +130,12 @@ export default class EnterOTPScreen extends Component {
                                        });
                                    }}
                                    placeholder={'Mã OTP'}/>
-                        <TouchableOpacity style={styles.touchable} onPress={()=>this.resetPassword()}>
+                        <TouchableOpacity style={styles.touchableEnterOTP} onPress={()=>this.resetPassword()}>
                             <View style={styles.touchableView}>
                                 <Text style={styles.touchableText}>Xác nhận</Text>
                             </View>
                         </TouchableOpacity>
-                      <Text style={styles.descriptionText} onPress={()=>this.sendOTP()}>
+                      <Text style={styles.descriptionTextEnterOTP} onPress={()=>this.sendOTP()}>
                         Không nhận được mã OTP? Gửi lại.
                       </Text>
 
@@ -144,61 +145,4 @@ export default class EnterOTPScreen extends Component {
         );
     }
 }
-const styles = StyleSheet.create({
-    screenView: {
-        flex: 1,
-    },
-    imageBackground: {
-        height: Dimensions.get('window').height,
-        width: Dimensions.get('window').width,
-    },
-    firstView: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingLeft: 20,
-    },
-    secondView: {
-        flex: 8,
-        alignItems: 'center',
-    },
-    input: {
-        height: 50,
-        width: 300,
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-        // borderWidth:2,
-        // borderColor:'#afb4b3',
-        color: 'gray',
-        fontSize: 15,
-        borderRadius: 25,
-        margin: 10,
-        paddingLeft: 20,
-    },
-    descriptionText: {
-      textDecorationLine: 'underline',
-        fontSize: 14,
-        color: 'gray',
-        margin: 20,
-    },
-    touchable: {
-        height: 50,
-        width: 300,
-        marginTop: 30,
-    },
-    touchableView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#da4842',
-        borderRadius: 25,
-    },
-    touchableText: {
-        fontSize: 18,
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    titleText: {
-        fontSize: 25,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-});
+

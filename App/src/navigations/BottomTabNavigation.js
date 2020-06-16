@@ -17,41 +17,42 @@ const Tab = createBottomTabNavigator();
 export default function BottomTabNavigation() {
   return (
     <Tab.Navigator>
-      <Tab.Screen
-        name="Project"
-        component={ProjectScreen}
-        options={{
-          tabBarLabel: 'Project',
-          tabBarIcon: () => <FirstIcon name="tasks" size={20} color="black" />,
-        }}
-      />
-      <Tab.Screen
-        name="Schedule"
-        component={ScheduleScreen}
-        options={{
-          tabBarLabel: 'Lịch trình',
-          tabBarIcon: () => <FourthIcon name="schedule" size={23} color="black" />,
-        }}
-      />
-      <Tab.Screen
-        name="FindRoad"
-        component={FindRoadScreen}
-        options={{
-          tabBarLabel: 'Tìm thành viên',
-          tabBarIcon: () => <ThirdIcon name="find" size={21} color="black" />,
-        }}
-      />
+        <Tab.Screen
+            name="FindRoad"
+            component={FindRoadScreen}
+            options={{
+                tabBarLabel: 'Tìm thành viên',
+                tabBarIcon: () => <ThirdIcon name="find" size={21} color="black" />,
+            }}
+        />
+      {/*<Tab.Screen*/}
+      {/*  name="Project"*/}
+      {/*  component={ProjectScreen}*/}
+      {/*  options={{*/}
+      {/*    tabBarLabel: 'Project',*/}
+      {/*    tabBarIcon: () => <FirstIcon name="tasks" size={20} color="black" />,*/}
+      {/*  }}*/}
+      {/*/>*/}
+      {/*<Tab.Screen*/}
+      {/*  name="Schedule"*/}
+      {/*  component={ScheduleScreen}*/}
+      {/*  options={{*/}
+      {/*    tabBarLabel: 'Lịch trình',*/}
+      {/*    tabBarIcon: () => <FourthIcon name="schedule" size={23} color="black" />,*/}
+      {/*  }}*/}
+      {/*/>*/}
 
-      <Tab.Screen
-        name="Personal"
-        component={PersonalScreen}
-        options={{
-          tabBarLabel: 'Cá nhân',
-          tabBarIcon: () => (
-            <SecondIcon name="md-person" size={23} color="black" />
-          ),
-        }}
-      />
+
+      {/*<Tab.Screen*/}
+      {/*  name="Personal"*/}
+      {/*  component={PersonalScreen}*/}
+      {/*  options={{*/}
+      {/*    tabBarLabel: 'Cá nhân',*/}
+      {/*    tabBarIcon: () => (*/}
+      {/*      <SecondIcon name="md-person" size={23} color="black" />*/}
+      {/*    ),*/}
+      {/*  }}*/}
+      {/*/>*/}
     </Tab.Navigator>
   );
 }

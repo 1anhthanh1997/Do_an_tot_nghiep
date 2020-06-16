@@ -4,6 +4,7 @@ import InfoIcon from 'react-native-vector-icons/Entypo';
 import ChangePassIcon from 'react-native-vector-icons/Fontisto';
 import LogoutIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-community/async-storage';
+import styles from '../res/styles';
 
 let selfUrl = 'http://open-drone-map.herokuapp.com';
 export default class PersonalScreen extends Component {
@@ -84,23 +85,3 @@ export default class PersonalScreen extends Component {
         );
     }
 }
-const styles = StyleSheet.create({
-    screenView: {
-        flex: 1,
-    },
-    childView: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingLeft: 20,
-    },
-    itemText: {
-        fontSize: 16,
-    },
-    emptyView: {
-        flex: 7,
-    },
-    infoIcon: {
-        marginRight: 40,
-    },
-});

@@ -6,11 +6,9 @@ import EnterOTPScreen from '../scenes/EnterOTPScreen';
 import LoginScreen from '../scenes/LoginScreen';
 import ForgotPasswordScreen from '../scenes/ForgotPasswordScreen';
 import RegisterScreen from '../scenes/RegisterScreen';
-import HomeScreen from '../scenes/HomeScreen';
 import TaskScreen from '../scenes/TaskScreen';
 import PersonalInformationScreen from '../scenes/PersonalInformationScreen';
 import ChangePassScreen from '../scenes/ChangePassScreen';
-import OrthophotoScreen from '../scenes/OrthophotoScreen';
 import {createStackNavigator} from '@react-navigation/stack';
 import TaskScheduleScreen from '../scenes/TaskScheduleScreen';
 import MapScheduleScreen from '../scenes/MapScheduleScreen';
@@ -46,15 +44,6 @@ function RootStack() {
                     }}
                 />
 
-
-                <Stack.Screen
-                    name="Orthophoto"
-                    component={OrthophotoScreen}
-                    options={{
-                        headerShown: false,
-                    }}
-                />
-
                 <Stack.Screen
                     name="ForgotPassword"
                     component={ForgotPasswordScreen}
@@ -76,13 +65,7 @@ function RootStack() {
                         headerShown: false,
                     }}
                 />
-                <Stack.Screen
-                    name="Home"
-                    component={HomeScreen}
-                    options={{
-                        headerShown: false,
-                    }}
-                />
+
                 <Stack.Screen
                     name="Task"
                     component={TaskScreen}

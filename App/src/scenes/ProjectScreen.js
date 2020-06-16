@@ -18,6 +18,7 @@ import {
     AccordionList,
 } from 'accordion-collapse-react-native';
 import {Thumbnail, List, ListItem, Separator, Icon} from 'native-base';
+import styles from '../res/styles';
 import AddIcon from 'react-native-vector-icons/Ionicons';
 import Dialog, {
     DialogContent,
@@ -533,40 +534,4 @@ export default class ProjectScreen extends Component {
         );
     }
 }
-const styles = StyleSheet.create({
-    dialogContentView: {
-        height: 200,
-        width: 350,
-        alignItems: 'center',
-    },
-    imageBackground: {
-        height: Dimensions.get('window').height,
-        width: Dimensions.get('window').width,
-    },
-    projectNameInput: {
-        height: 50,
-        width: 300,
-        backgroundColor: '#d3d3d3',
-        borderRadius: 10,
-        marginTop: 5,
-        color: 'gray',
-        fontSize: 15,
-        paddingLeft: 15,
-    },
-    descriptionInput: {
-        height: 150,
-        width: 300,
-        backgroundColor: '#d3d3d3',
-        borderRadius: 10,
-        marginTop: 5,
-        color: 'gray',
-        fontSize: 15,
-        paddingLeft: 15,
-    },
-    searchInput: {
-        padding: 10,
-        borderColor: '#CCC',
-        backgroundColor: '#CCC',
-        borderWidth: 1,
-    },
-});
+

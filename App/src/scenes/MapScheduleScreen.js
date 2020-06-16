@@ -1118,6 +1118,4 @@ export default class MapScheduleScreen extends React.Component {
 }
 
 
-// const styles = StyleSheet.create({
-//
-// });
+

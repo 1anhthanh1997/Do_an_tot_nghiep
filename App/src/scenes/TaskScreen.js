@@ -31,7 +31,7 @@ import ImagePicker from 'react-native-image-crop-picker';
 import RNFetchBlob from 'rn-fetch-blob';
 import DocumentPicker from 'react-native-document-picker';
 import SearchInput, {createFilter} from 'react-native-search-filter';
-
+import styles from '../res/styles';
 const url = 'http://192.168.55.108:8000';
 const selfUrl = 'http://open-drone-map.herokuapp.com';
 const width = Dimensions.get('window').width;
@@ -588,7 +588,7 @@ export default class taskScreen extends Component {
                         }>
 
                         <DialogContent>
-                            <View style={styles.dialogContentView}>
+                            <View style={styles.dialogContentViewTask}>
                                 <View style={{alignItems: 'center', flex: 1}}>
                                     <TextInput
                                         style={styles.taskNameInput}
@@ -655,7 +655,7 @@ export default class taskScreen extends Component {
                         }
                     >
                         <DialogContent>
-                            <View style={styles.dialogContentView}>
+                            <View style={styles.dialogContentViewTask}>
                                 <View style={{alignItems: 'center', flex: 1}}>
                                     <TextInput
                                         style={styles.taskNameInput}
@@ -713,7 +713,7 @@ export default class taskScreen extends Component {
                             </DialogFooter>
                         }>
                         <DialogContent>
-                            <View style={styles.dialogContentView}>
+                            <View style={styles.dialogContentViewTask}>
                                 <View style={{alignItems: 'center', flex: 1}}>
                                     <TextInput
                                         style={styles.taskNameInput}
@@ -885,61 +885,3 @@ export default class taskScreen extends Component {
         );
     }
 }
-const styles = StyleSheet.create({
-    bottomButtonDialog: {
-        flex: 1,
-        backgroundColor: 'red',
-    },
-    spinnerTextStyle: {
-        color: '#FFF',
-    },
-    chooseImageTouchable: {
-        height: 35,
-        width: 120,
-        backgroundColor: 'blue',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 10,
-    },
-    dialogContentView: {
-        height: 100,
-        width: 350,
-    },
-    imageBackground: {
-        height: Dimensions.get('window').height,
-        width: Dimensions.get('window').width,
-    },
-    taskNameInput: {
-        height: 50,
-        width: 300,
-        backgroundColor: '#d3d3d3',
-        borderRadius: 10,
-        marginTop: 5,
-        color: 'gray',
-        fontSize: 15,
-        paddingLeft: 15,
-    },
-    descriptionInput: {
-        height: 150,
-        width: 300,
-        backgroundColor: '#d3d3d3',
-        borderRadius: 10,
-        marginTop: 5,
-        color: 'gray',
-        fontSize: 15,
-        paddingLeft: 15,
-    },
-    chooseImageView: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 10,
-    },
-    searchInput: {
-        padding: 10,
-        borderColor: '#CCC',
-        backgroundColor: '#CCC',
-        borderWidth: 1,
-    },
-});

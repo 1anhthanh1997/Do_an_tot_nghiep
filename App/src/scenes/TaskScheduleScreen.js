@@ -17,7 +17,7 @@ import {
 import Spinner from 'react-native-loading-spinner-overlay';
 import Toast from 'react-native-simple-toast';
 import AsyncStorage from '@react-native-community/async-storage';
-
+import styles from '../res/styles';
 import AddIcon from 'react-native-vector-icons/Ionicons';
 import Dialog, {
     DialogContent,
@@ -418,61 +418,3 @@ export default class TaskScheduleScreen extends Component {
 }
 
 
-const styles = StyleSheet.create({
-    bottomButtonDialog: {
-        flex: 1,
-        backgroundColor: 'red',
-    },
-    spinnerTextStyle: {
-        color: '#FFF',
-    },
-    chooseImageTouchable: {
-        height: 35,
-        width: 120,
-        backgroundColor: 'blue',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 10,
-    },
-    dialogContentView: {
-        height: 100,
-        width: 350,
-    },
-    imageBackground: {
-        height: Dimensions.get('window').height,
-        width: Dimensions.get('window').width,
-    },
-    taskNameInput: {
-        height: 50,
-        width: 300,
-        backgroundColor: '#d3d3d3',
-        borderRadius: 10,
-        marginTop: 5,
-        color: 'gray',
-        fontSize: 15,
-        paddingLeft: 15,
-    },
-    descriptionInput: {
-        height: 150,
-        width: 300,
-        backgroundColor: '#d3d3d3',
-        borderRadius: 10,
-        marginTop: 5,
-        color: 'gray',
-        fontSize: 15,
-        paddingLeft: 15,
-    },
-    chooseImageView: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 10,
-    },
-    searchInput: {
-        padding: 10,
-        borderColor: '#CCC',
-        backgroundColor: '#CCC',
-        borderWidth: 1,
-    },
-});

@@ -11,6 +11,7 @@ import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native
 import SearchInput, {createFilter} from 'react-native-search-filter';
 import ImagePicker from 'react-native-image-crop-picker';
 import RNFetchBlob from 'rn-fetch-blob';
+import styles from '../res/styles';
 
 let selfUrl2 = 'http://192.168.55.108:5000';
 
@@ -58,43 +59,14 @@ export default class App extends Component {
       type: this.state.images.mime,
       name: `filename1.jpg`,
     });
-    let downloadUrl =selfUrl2 + '/api/test'
+
+    await this.detectPersonApi(data).then(async (res)=>{
+        res.data.pipe(fs.createWriteStream('test.jpg'));
+
+        }
+    )
 
 
-    let dirs = RNFetchBlob.fs.dirs;
-    let path = `${dirs.DownloadDir}/test.jpg`;
-    RNFetchBlob.config({
-      // response data will be saved to this path if it has access right.
-      path: path,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        path: path,
-        description: 'Image',
-      },
-    }).fetch(downloadUrl, {
-      method: 'POST',
-      headers: {
-        // 'Content-Type': 'application/json',
-        'Content-type': 'multipart/form-data',
-      },
-      body: data,
-    })
-        .then(async res => {
-          // the path should be dirs.DocumentDir + 'path-to-file.anything'
-          let url = 'file://' + res.path();
-          // await this.changeToPng(url);
-          // await this.setState({
-          //      imageUrl:url
-          //  });
-          console.log(url);
-        });
-    // // await this.detectPersonApi();
-    // await this.detectPersonApi(data).then(async (res)=>{
-
-      // let response= await res.json()
-      // console.log(response)
-    // })
   };
   handleChoosePhoto = () => {
     ImagePicker.openPicker({
@@ -127,7 +99,7 @@ export default class App extends Component {
   render() {
     const filteredEmails = this.state.email.filter(createFilter(this.state.searchTerm, KEYS_TO_FILTERS))
     return (
-        <View style={styles.container}>
+        <View style={styles.containerFindRoad}>
           <SearchInput
               onChangeText={(term) => { this.searchUpdated(term) }}
               style={styles.searchInput}
@@ -165,23 +137,4 @@ export default class App extends Component {
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'flex-start'
-  },
-  emailItem: {
-    borderBottomWidth: 0.5,
-    borderColor: 'rgba(0,0,0,0.3)',
-    padding: 10
-  },
-  emailSubject: {
-    color: 'rgba(0,0,0,0.5)'
-  },
-  searchInput: {
-    padding: 10,
-    borderColor: '#CCC',
-    borderWidth: 1
-  }
-});
+
